@@ -1,0 +1,51 @@
+{
+  "name": "domain04",
+  "issuesValues": {
+    "issueA": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD",
+        "valueE"
+      ]
+    },
+    "issueB": {
+      "values": [
+        "valueA",
+        "valueB"
+      ]
+    },
+    "issueC": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD",
+        "valueE",
+        "valueF",
+        "valueG",
+        "valueH",
+        "valueI",
+        "valueJ",
+        "valueK",
+        "valueL"
+      ]
+    },
+    "issueD": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD",
+        "valueE",
+        "valueF",
+        "valueG",
+        "valueH",
+        "valueI",
+        "valueJ",
+        "valueK"
+      ]
+    }
+  }
+}

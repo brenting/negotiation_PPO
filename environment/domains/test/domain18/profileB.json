@@ -1,0 +1,152 @@
+{
+  "LinearAdditiveUtilitySpace": {
+    "issueUtilities": {
+      "issueA": {
+        "DiscreteValueSetUtilities": {
+          "valueUtilities": {
+            "valueA": 0.41708,
+            "valueB": 0.01679,
+            "valueC": 0.01647,
+            "valueD": 0.0927,
+            "valueE": 0.17726,
+            "valueF": 0.24051,
+            "valueG": 0.01588,
+            "valueH": 0.01706,
+            "valueI": 0.0125,
+            "valueJ": 0.2124,
+            "valueK": 1.0,
+            "valueL": 0.09909,
+            "valueM": 0.25312,
+            "valueN": 0.16653,
+            "valueO": 0.41794,
+            "valueP": 0.0,
+            "valueQ": 0.08256,
+            "valueR": 0.21229,
+            "valueS": 0.06008,
+            "valueT": 0.0735,
+            "valueU": 0.0824,
+            "valueV": 0.36219,
+            "valueW": 0.62245,
+            "valueX": 0.21245,
+            "valueY": 0.13552,
+            "valueZ": 0.32485
+          }
+        }
+      },
+      "issueB": {
+        "DiscreteValueSetUtilities": {
+          "valueUtilities": {
+            "valueA": 0.0,
+            "valueB": 0.08348,
+            "valueC": 0.32001,
+            "valueD": 0.19754,
+            "valueE": 0.03584,
+            "valueF": 1.0
+          }
+        }
+      },
+      "issueC": {
+        "DiscreteValueSetUtilities": {
+          "valueUtilities": {
+            "valueA": 0.03523,
+            "valueB": 0.3116,
+            "valueC": 1.0,
+            "valueD": 0.25232,
+            "valueE": 0.49447,
+            "valueF": 0.71926,
+            "valueG": 0.05301,
+            "valueH": 0.88064,
+            "valueI": 0.01193,
+            "valueJ": 0.14331,
+            "valueK": 0.30529,
+            "valueL": 0.0,
+            "valueM": 0.32655
+          }
+        }
+      },
+      "issueD": {
+        "DiscreteValueSetUtilities": {
+          "valueUtilities": {
+            "valueA": 1.0,
+            "valueB": 0.0
+          }
+        }
+      }
+    },
+    "issueWeights": {
+      "issueA": 0.2897,
+      "issueB": 0.1167,
+      "issueC": 0.42629,
+      "issueD": 0.16731
+    },
+    "domain": {
+      "name": "domain18",
+      "issuesValues": {
+        "issueA": {
+          "values": [
+            "valueA",
+            "valueB",
+            "valueC",
+            "valueD",
+            "valueE",
+            "valueF",
+            "valueG",
+            "valueH",
+            "valueI",
+            "valueJ",
+            "valueK",
+            "valueL",
+            "valueM",
+            "valueN",
+            "valueO",
+            "valueP",
+            "valueQ",
+            "valueR",
+            "valueS",
+            "valueT",
+            "valueU",
+            "valueV",
+            "valueW",
+            "valueX",
+            "valueY",
+            "valueZ"
+          ]
+        },
+        "issueB": {
+          "values": [
+            "valueA",
+            "valueB",
+            "valueC",
+            "valueD",
+            "valueE",
+            "valueF"
+          ]
+        },
+        "issueC": {
+          "values": [
+            "valueA",
+            "valueB",
+            "valueC",
+            "valueD",
+            "valueE",
+            "valueF",
+            "valueG",
+            "valueH",
+            "valueI",
+            "valueJ",
+            "valueK",
+            "valueL",
+            "valueM"
+          ]
+        },
+        "issueD": {
+          "values": [
+            "valueA",
+            "valueB"
+          ]
+        }
+      }
+    },
+    "name": "profileB"
+  }
+}

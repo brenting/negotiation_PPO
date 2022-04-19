@@ -1,0 +1,57 @@
+{
+  "name": "domain08",
+  "issuesValues": {
+    "issueA": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC"
+      ]
+    },
+    "issueB": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD"
+      ]
+    },
+    "issueC": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD",
+        "valueE",
+        "valueF",
+        "valueG"
+      ]
+    },
+    "issueD": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD"
+      ]
+    },
+    "issueE": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD",
+        "valueE",
+        "valueF",
+        "valueG"
+      ]
+    },
+    "issueF": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC"
+      ]
+    }
+  }
+}

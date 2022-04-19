@@ -1,0 +1,8 @@
+.venv
+.vscode
+
+__pycache__
+logs
+
+checkpoint.pkl
+*.sbatch

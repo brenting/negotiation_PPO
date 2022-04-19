@@ -1,0 +1,46 @@
+{
+  "name": "domain06",
+  "issuesValues": {
+    "issueA": {
+      "values": [
+        "valueA",
+        "valueB"
+      ]
+    },
+    "issueB": {
+      "values": [
+        "valueA",
+        "valueB"
+      ]
+    },
+    "issueC": {
+      "values": [
+        "valueA",
+        "valueB"
+      ]
+    },
+    "issueD": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC"
+      ]
+    },
+    "issueE": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC",
+        "valueD",
+        "valueE"
+      ]
+    },
+    "issueF": {
+      "values": [
+        "valueA",
+        "valueB",
+        "valueC"
+      ]
+    }
+  }
+}
