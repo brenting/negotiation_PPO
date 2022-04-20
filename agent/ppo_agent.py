@@ -4,7 +4,6 @@ from random import randint
 from typing import cast
 
 import numpy as np
-from pytz import NonExistentTimeError
 from environment.negotiation import NegotiationEnv
 from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
@@ -65,7 +64,7 @@ class PPOAgent:
         self.domain: Domain = None
         self.profile: LinearAdditiveUtilitySpace = None
         self.progress: ProgressTime = None
-        self.me: PartyId = NonExistentTimeError
+        self.me: PartyId = None
         self.settings: Settings = None
 
         self.opponent_model: OpponentModel = None
