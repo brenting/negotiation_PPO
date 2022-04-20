@@ -1,5 +1,6 @@
 https://tracinsy.ewi.tudelft.nl/pubtrac/GeniusWebPython/export/93/geniuswebcore/dist/geniusweb-1.2.1.tar.gz
-plotly
-kaleido
-numpy
-gym
+plotly==5.7.0
+kaleido==0.2.1
+numpy==1.22.3
+gym==0.23.1
+torch==1.11.0
