@@ -1,6 +1,7 @@
 import random
 import time
 from datetime import datetime
+from typing import Optional
 
 import gym
 from geniusweb.actions.Accept import Accept
@@ -17,7 +18,7 @@ from geniusweb.progress.ProgressTime import ProgressTime
 from geniusweb.references.Parameters import Parameters
 from geniusweb.references.ProfileRef import ProfileRef
 from geniusweb.references.ProtocolRef import ProtocolRef
-from geniusweb.simplerunner.NegoRunner import StdOutReporter
+from tudelft_utilities_logging.Reporter import Reporter
 from uri.uri import URI
 
 from environment.domains import get_utility_function
@@ -41,11 +42,12 @@ class NegotiationEnv(gym.Env):
         self.deadline_ms = deadline_ms
 
         self.opponent = None
-        self.utility_function = None
+        self.my_utility_function = None
+        self.opp_utility_function = None
 
     def step(self, action: Inform) -> tuple[Action, float, bool, None]:
         if self.progress.get(time.time() * 1000) > 1.0:
-            return None, 0.0, True, None
+            return None, 0.0, True, None  # observation, reward, done, info
 
         self.opponent.notifyChange(ActionDone(action))
 
@@ -53,29 +55,32 @@ class NegotiationEnv(gym.Env):
             bid = action.getBid()
             agreements = Agreements({self.opponent_ID: bid, self.my_ID: bid})
             self.opponent.notifyChange(Finished(agreements))
-            reward = float(self.utility_function.getUtility(action.getBid()))
-            return None, reward, True, None
+            my_reward = float(self.my_utility_function.getUtility(action.getBid()))
+            opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
+            return None, my_reward, True, opp_reward  # observation, reward, done, info
 
         observation: Action = self.opponent.notifyChange(YourTurn())
 
         if self.progress.get(time.time() * 1000) > 1.0:
-            return None, 0.0, True, None
+            return None, 0.0, True, None  # observation, reward, done, info
 
         if isinstance(observation, Accept):
             bid = observation.getBid()
             agreements = Agreements({self.opponent_ID: bid, self.my_ID: bid})
             self.opponent.notifyChange(Finished(agreements))
-            reward = float(self.utility_function.getUtility(action.getBid()))
-            return None, reward, True, None
+            my_reward = float(self.my_utility_function.getUtility(action.getBid()))
+            opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
+            return None, my_reward, True, opp_reward  # observation, reward, done, info
 
         return observation, 0.0, False, None  # observation, reward, done, info
 
     def reset(self, my_agent):
-        self.opponent: DefaultParty = random.choice(self.opponents)(StdOutReporter())
+        self.opponent: DefaultParty = random.choice(self.opponents)(VoidReporter())
         domain = list(random.choice(self.domains))
         random.shuffle(domain)
 
-        self.utility_function = get_utility_function(domain[1])
+        self.opp_utility_function = get_utility_function(domain[0])
+        self.my_utility_function = get_utility_function(domain[1])
 
         self.progress = ProgressTime(self.deadline_ms, datetime.now())
 
@@ -111,4 +116,10 @@ class NegotiationEnv(gym.Env):
 
     def close(self):
         self.opponent = None
-        self.utility_function = None
+        self.my_utility_function = None
+        self.opp_utility_function = None
+
+
+class VoidReporter(Reporter):
+	def log(self, level:int , msg:str, exc:Optional[BaseException]=None):
+		pass

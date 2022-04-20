@@ -10,23 +10,30 @@ from environment.opponents import (
     StupidAgent,
 )
 
+# collect domains and opponents for testing (don't initialise the opponents)
 domains = get_domains("environment/domains/test")
-
 opponents = (
     BoulwareAgent,
 )
 
-# Parallel environments
+# create environment and PPO agent
 env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
-
 agent = PPOAgent.load("checkpoint.pkl")
 
-for _ in range(5):
+# test on 50 random negotiation sessions and gather average results
+rewards = []
+opp_rewards = []
+for _ in range(50):
     obs = env.reset(agent)
     done = False
     while not done:
         action = agent.select_action(obs)
-        obs, reward, done, _ = env.step(action)
+        obs, reward, done, opp_reward = env.step(action)
         if done:
-            print(reward)
+            rewards.append(reward)
+            opp_rewards.append(opp_reward)
             break
+
+# print results
+print(f"Average reward: {sum(rewards)/len(rewards)}")
+print(f"Average opponent reward: {sum(opp_rewards)/len(opp_rewards)}")

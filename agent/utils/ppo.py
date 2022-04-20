@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
 from torch.distributions import MultivariateNormal
 # from torch.distributions import Categorical
 
@@ -113,8 +114,7 @@ class PPO:
 
         self.policy_old = ActorCritic(state_dim, action_dim, action_std).to(DEVICE)
         self.policy_old.load_state_dict(self.policy.state_dict())
-        
-        self.MseLoss = nn.MSELoss()
+    
 
     def set_action_std(self, new_action_std):
         self.action_std = new_action_std
@@ -167,7 +167,6 @@ class PPO:
 
         # Optimize policy for K epochs
         for _ in range(self.K_epochs):
-
             # Evaluating old actions and values
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
@@ -180,10 +179,10 @@ class PPO:
             # Finding Surrogate Loss
             advantages = rewards - state_values.detach()   
             surr1 = ratios * advantages
-            surr2 = torch.clamp(ratios, 1-self.eps_clip, 1+self.eps_clip) * advantages
+            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
 
             # final loss of clipped objective PPO
-            loss = -torch.min(surr1, surr2) + 0.5*self.MseLoss(state_values, rewards) - 0.01*dist_entropy
+            loss = -torch.min(surr1, surr2).mean() + 0.5 * F.mse_loss(state_values, rewards) - 0.01 * dist_entropy
             
             # take gradient step
             self.optimizer.zero_grad()
