@@ -42,21 +42,19 @@ class ActorCritic(nn.Module):
         self.action_var = torch.full((action_dim,), action_std_init * action_std_init).to(DEVICE)
         # actor
         self.actor = nn.Sequential(
-                        nn.Linear(state_dim, 12),
+                        nn.Linear(state_dim, 64),
                         nn.Tanh(),
-                        nn.Linear(12, 12),
+                        nn.Linear(64, 64),
                         nn.Tanh(),
-                        nn.Linear(12, action_dim),
-                        nn.Tanh(),
+                        nn.Linear(64, action_dim),
                     ).to(DEVICE)
         # critic
         self.critic = nn.Sequential(
-                        nn.Linear(state_dim, 12),
+                        nn.Linear(state_dim, 64),
                         nn.Tanh(),
-                        nn.Linear(12, 12),
+                        nn.Linear(64, 64),
                         nn.Tanh(),
-                        nn.Linear(12, 1),
-                        nn.Tanh(),
+                        nn.Linear(64, 1),
                     ).to(DEVICE)
         
     def set_action_std(self, new_action_std):
