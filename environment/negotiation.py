@@ -47,7 +47,7 @@ class NegotiationEnv(gym.Env):
 
     def step(self, action: Inform) -> tuple[Action, float, bool, None]:
         if self.progress.get(time.time() * 1000) == 1:
-            return None, 0.0, True, None  # observation, reward, done, info
+            return None, 0.0, True, 0.0  # observation, reward, done, info
 
         self.opponent.notifyChange(ActionDone(action))
 
@@ -62,7 +62,7 @@ class NegotiationEnv(gym.Env):
         observation: Action = self.opponent.notifyChange(YourTurn())
 
         if self.progress.get(time.time() * 1000) == 1:
-            return None, 0.0, True, None  # observation, reward, done, info
+            return None, 0.0, True, 0.0  # observation, reward, done, info
 
         if isinstance(observation, Accept):
             bid = observation.getBid()
