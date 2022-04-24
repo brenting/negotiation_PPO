@@ -179,7 +179,7 @@ class PPOAgent:
             log_dir_path.mkdir(parents=True)
 
         # track total training time
-        start_time = time.strftime("%Y-%m-%d_%H:%M:%S")
+        start_time = time.strftime("%Y-%m-%d_%H%M%S")
         log_file_path = log_dir_path.joinpath(f"{start_time}.csv")
 
         print(f"Started training at (GMT) : {start_time}")
