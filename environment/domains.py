@@ -14,10 +14,9 @@ from uri.uri import URI
 def get_domains(domains_dir: Union[str, Path]) -> tuple[tuple[URI, URI]]:
     dir = Path(domains_dir)
 
-    A_profiles = (URI(f"file:{x}") for x in sorted(dir.glob("domain*/profileA.json")))
-    B_profiles = (URI(f"file:{x}") for x in sorted(dir.glob("domain*/profileB.json")))
+    A_profiles = (URI(f"file:{str(x)}") for x in [str(x).replace("\\", "/") for x in sorted(dir.glob("domain*/profileA.json"))])
+    B_profiles = (URI(f"file:{str(x)}") for x in [str(x).replace("\\", "/") for x in sorted(dir.glob("domain*/profileB.json"))])
     domains = tuple(zip(A_profiles, B_profiles))
-
     return domains
 
 

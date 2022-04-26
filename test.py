@@ -23,6 +23,7 @@ agent = PPOAgent.load("checkpoint.pkl")
 # test on 50 random negotiation sessions and gather average results
 rewards = []
 opp_rewards = []
+welfare = []
 for _ in range(50):
     obs = env.reset(agent)
     done = False
@@ -32,8 +33,10 @@ for _ in range(50):
         if done:
             rewards.append(reward)
             opp_rewards.append(opp_reward)
+            welfare.append(reward + opp_reward)
             break
 
 # print results
 print(f"Average reward: {sum(rewards)/len(rewards)}")
 print(f"Average opponent reward: {sum(opp_rewards)/len(opp_rewards)}")
+print(f"Average social welfare: {sum(welfare)/len(welfare)}")

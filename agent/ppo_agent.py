@@ -124,7 +124,7 @@ class PPOAgent:
         util_goals = self.ppo.select_action(state)
         assert len(util_goals) == PPO_PARAMETERS["action_dim"]
 
-        # return Accept if the reveived offer is better than our goal
+        # return Accept if the received offer is better than our goal
         if util_goals[0] < received_util:
             return Accept(self.me, received_bid)
 
@@ -179,7 +179,7 @@ class PPOAgent:
             log_dir_path.mkdir(parents=True)
 
         # track total training time
-        start_time = time.strftime("%Y-%m-%d_%H:%M:%S")
+        start_time = time.strftime("%Y-%m-%d_%H-%M-%S")
         log_file_path = log_dir_path.joinpath(f"{start_time}.csv")
 
         print(f"Started training at (GMT) : {start_time}")

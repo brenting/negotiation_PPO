@@ -28,5 +28,5 @@ agent = PPOAgent()
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-agent.train(env=env, time_budget_sec=25000, checkpoint_path=checkpoint_path)
+agent.train(env=env, time_budget_sec=60, checkpoint_path=checkpoint_path)
 agent.save(checkpoint_path)
