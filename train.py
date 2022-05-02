@@ -8,16 +8,19 @@ from environment.opponents import (
     LinearAgent,
     RandomAgent,
     StupidAgent,
+    SelfPlayAgent
 )
 
 # collect domains and opponents for trainig (don't initialise the opponents)
+
 domains = get_domains("environment/domains/train")
 opponents = (
-    ConcederAgent,
-    HardlinerAgent,
-    LinearAgent,
-    RandomAgent,
-    StupidAgent,
+    # ConcederAgent,
+    # HardlinerAgent,
+    # LinearAgent,
+    # RandomAgent,
+    # StupidAgent,
+    SelfPlayAgent,
 )
 
 # create environment and PPO agent
@@ -28,5 +31,5 @@ agent = PPOAgent()
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-agent.train(env=env, time_budget_sec=25000, checkpoint_path=checkpoint_path)
+agent.train(env=env, time_budget_sec=250000, checkpoint_path=checkpoint_path)
 agent.save(checkpoint_path)
