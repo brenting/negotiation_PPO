@@ -34,7 +34,7 @@ def fuzz_issue_weights(folder):
         out_file.close()
 
         # compute distance metric
-        #print(distance_issue_weights(d, "models/fuzzed_weights/" + folder + "/" + str(d_number) + ".json"))
+        # print(distance_issue_weights(d, "models/fuzzed_weights/" + folder + "/" + str(d_number) + ".json"))
         d_number += 1
 
 
@@ -62,7 +62,7 @@ def fuzz_value_utilities(folder):
         out_file = open("models/fuzzed_values/" + folder + "/" + str(d_number) + ".json", "w")
         json.dump(profile, out_file)
         out_file.close()
-        #print(distance_issue_values(d, "models/fuzzed_values/" + folder + "/" + str(d_number) + ".json"))
+        # print(distance_issue_values(d, "models/fuzzed_values/" + folder + "/" + str(d_number) + ".json"))
         d_number += 1
 
 

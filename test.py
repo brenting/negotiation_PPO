@@ -24,19 +24,30 @@ agent = PPOAgent.load("checkpoint.pkl")
 rewards = []
 opp_rewards = []
 welfare = []
+agreements = 0
 for _ in range(50):
     obs = env.reset(agent)
     done = False
     while not done:
+        domain = env.current_domain
+        #print(domain[0])
         action = agent.select_action(obs)
         obs, reward, done, opp_reward = env.step(action)
         if done:
+            if reward != 0:
+                agreements += 1
             rewards.append(reward)
-            opp_rewards.append(opp_reward)
-            welfare.append(reward + opp_reward)
+
+            if opp_reward is None:
+                welfare.append(reward)
+            else:
+                opp_rewards.append(opp_reward)
+                welfare.append(reward + opp_reward)
             break
 
 # print results
 print(f"Average reward: {sum(rewards)/len(rewards)}")
 print(f"Average opponent reward: {sum(opp_rewards)/len(opp_rewards)}")
 print(f"Average social welfare: {sum(welfare)/len(welfare)}")
+print(f"Percentage of agreements: {agreements * 2}")  # (agreements / 50) * 100 = agreements * 2
+# TODO distance to pareto frontier
