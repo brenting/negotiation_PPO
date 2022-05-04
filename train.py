@@ -1,6 +1,7 @@
 from environment.negotiation import NegotiationEnv
 from environment.domains import get_domains
 from agent.ppo_agent import PPOAgent
+from agent.acceptance_agent import AcceptanceAgent
 from environment.opponents import (
     BoulwareAgent,
     ConcederAgent,
@@ -16,17 +17,18 @@ opponents = (
     ConcederAgent,
     HardlinerAgent,
     LinearAgent,
-    RandomAgent,
-    StupidAgent,
+    #RandomAgent,
+    #StupidAgent,
 )
 
 # create environment and PPO agent
 env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
-agent = PPOAgent()
+agent = AcceptanceAgent()
 
 # set checkpoint path for intermediate model checkpoints
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-agent.train(env=env, time_budget_sec=60, checkpoint_path=checkpoint_path)
+
+agent.train(env=env, time_budget_sec=400, checkpoint_path=checkpoint_path)
 agent.save(checkpoint_path)

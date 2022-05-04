@@ -4,5 +4,5 @@
 __pycache__
 logs
 
-checkpoint.pkl
+../../negotiation/agents/acceptance_agent/checkpoint.pkl
 *.sbatch

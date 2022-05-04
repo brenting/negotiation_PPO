@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 import gym
+from geniusweb.actions.Offer import Offer
 from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
 from geniusweb.actions.PartyId import PartyId
@@ -22,6 +23,7 @@ from tudelft_utilities_logging.Reporter import Reporter
 from uri.uri import URI
 
 from environment.domains import get_utility_function
+from utils.plot_trace import plot_nash_kalai_pareto
 
 
 class NegotiationEnv(gym.Env):
@@ -30,20 +32,22 @@ class NegotiationEnv(gym.Env):
     metadata = {"render.modes": ["human"]}
 
     def __init__(
-        self,
-        domains: tuple[tuple[URI, URI]],
-        opponents: tuple[DefaultParty],
-        deadline_ms: int,
+            self,
+            domains: tuple[tuple[URI, URI]],
+            opponents: tuple[DefaultParty],
+            deadline_ms: int,
     ):
         super().__init__()
 
         self.domains = domains
         self.opponents = opponents
         self.deadline_ms = deadline_ms
+        self.current_domain = None
 
         self.opponent = None
         self.my_utility_function = None
         self.opp_utility_function = None
+        self.trace = {"actions": []}
 
     def step(self, action: Inform) -> tuple[Action, float, bool, None]:
         if self.progress.get(time.time() * 1000) == 1:
@@ -52,25 +56,30 @@ class NegotiationEnv(gym.Env):
         self.opponent.notifyChange(ActionDone(action))
 
         if isinstance(action, Accept):
+            self.append_trace(action, None)
+
             bid = action.getBid()
             agreements = Agreements({self.opponent_ID: bid, self.my_ID: bid})
             self.opponent.notifyChange(Finished(agreements))
             my_reward = float(self.my_utility_function.getUtility(action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
-            return None, my_reward, True, opp_reward  # observation, reward, done, info
+            return None, my_reward ** 3, True, opp_reward  # observation, reward, done, info
 
         observation: Action = self.opponent.notifyChange(YourTurn())
 
         if self.progress.get(time.time() * 1000) == 1:
             return None, 0.0, True, None  # observation, reward, done, info
 
+        self.append_trace(action, observation)
+
         if isinstance(observation, Accept):
+
             bid = observation.getBid()
             agreements = Agreements({self.opponent_ID: bid, self.my_ID: bid})
             self.opponent.notifyChange(Finished(agreements))
             my_reward = float(self.my_utility_function.getUtility(action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
-            return None, my_reward, True, opp_reward  # observation, reward, done, info
+            return None, my_reward ** 3, True, opp_reward  # observation, reward, done, info
 
         return observation, 0.0, False, None  # observation, reward, done, info
 
@@ -78,7 +87,8 @@ class NegotiationEnv(gym.Env):
         self.opponent: DefaultParty = random.choice(self.opponents)(VoidReporter())
         domain = list(random.choice(self.domains))
         random.shuffle(domain)
-
+        self.trace = {"actions": []}
+        self.current_domain = domain
         self.opp_utility_function = get_utility_function(domain[0])
         self.my_utility_function = get_utility_function(domain[1])
 
@@ -109,7 +119,41 @@ class NegotiationEnv(gym.Env):
 
         observation = self.opponent.notifyChange(YourTurn())
 
+        # write e value to file
+        f = open("evalue.txt", "w")
+        try:
+            e = self.opponent.getE()
+        except AttributeError:
+            e = 0.5
+        f.write(str(e))
+
         return observation  # reward, done, info can't be included
+
+    def append_trace(self, my_action, opp_action):
+
+        if isinstance(my_action, Accept) and opp_action is None:
+            my_reward = float(self.my_utility_function.getUtility(my_action.getBid()))
+            opp_reward = float(self.opp_utility_function.getUtility(my_action.getBid()))
+            self.trace["actions"].append(
+                {"Accept": {"actor": "me", "utilities": {"me": my_reward, "opponent": opp_reward}}})
+
+        if isinstance(my_action, Offer):
+            my_reward = float(self.my_utility_function.getUtility(my_action.getBid()))
+            opp_reward = float(self.opp_utility_function.getUtility(my_action.getBid()))
+            self.trace["actions"].append(
+                {"Offer": {"actor": "me", "utilities": {"mine": my_reward, "opponent": opp_reward}}})
+
+        if isinstance(opp_action, Offer):
+            my_reward = float(self.my_utility_function.getUtility(opp_action.getBid()))
+            opp_reward = float(self.opp_utility_function.getUtility(opp_action.getBid()))
+            self.trace["actions"].append(
+                {"Offer": {"actor": "opponent", "utilities": {"mine": my_reward, "opponent": opp_reward}}})
+
+        if isinstance(opp_action, Accept):
+            my_reward = float(self.my_utility_function.getUtility(opp_action.getBid()))
+            opp_reward = float(self.opp_utility_function.getUtility(opp_action.getBid()))
+            self.trace["actions"].append(
+                {"Accept": {"actor": "opponent", "utilities": {"mine": my_reward, "opponent": opp_reward}}})
 
     def render(self, mode="human"):
         ...
@@ -121,5 +165,5 @@ class NegotiationEnv(gym.Env):
 
 
 class VoidReporter(Reporter):
-	def log(self, level:int , msg:str, exc:Optional[BaseException]=None):
-		pass
+    def log(self, level: int, msg: str, exc: Optional[BaseException] = None):
+        pass

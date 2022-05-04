@@ -2,7 +2,6 @@ import json
 import math
 import os
 import numpy as np
-from environment.representation_metrics import distance_issue_weights, distance_issue_values
 
 # Use either test/train
 folder = "test"
