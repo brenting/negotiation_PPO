@@ -2,12 +2,9 @@ import operator
 import random
 import time
 from pathlib import Path
-from random import randint
 from typing import cast
 
 import numpy as np
-from environment.negotiation import NegotiationEnv
-from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
 from geniusweb.actions.Offer import Offer
 from geniusweb.actions.PartyId import PartyId
@@ -23,11 +20,10 @@ from geniusweb.profileconnection.ProfileConnectionFactory import (
     ProfileConnectionFactory,
 )
 from geniusweb.progress.ProgressTime import ProgressTime
-from geniusweb.references.Parameters import Parameters
 from geniusweb.simplerunner.NegoRunner import StdOutReporter
 
 from agent.utils.opponent_model import OpponentModel
-
+from environment.negotiation import NegotiationEnv
 from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################
@@ -71,7 +67,6 @@ class AcceptanceAgent:
         self.me: PartyId = None
         self.settings: Settings = None
 
-        self.opponent_model: OpponentModel = None
         self.opp_concession = None
         self.received_utils = np.array([])
         self.reservation_bid_utility = 0
@@ -92,18 +87,15 @@ class AcceptanceAgent:
         # a Settings message is the first message that will be send to your
         # agent containing all the information about the negotiation session.
         if isinstance(data, Settings):
-            self.opponent_model: OpponentModel = None
-            self.opp_concession = None
             self.received_utils = np.array([])
             self.reservation_bid_utility = 0
             self.bids_utility_map = {}
             self.max_possible_utility = 0
-            self.all_bids = None
             self.acceptability_index = 0
-
+            self.last_received_utils = [0.0, 0.0, 0.0]
+            self.target = 1
             self.settings = cast(Settings, data)
             self.me = self.settings.getID()
-
 
             # progress towards the deadline has to be tracked manually through the use of the Progress object
             self.progress = self.settings.getProgress()
@@ -116,7 +108,6 @@ class AcceptanceAgent:
             profile_connection.close()
 
             self.opponent_model = OpponentModel(self.domain)
-
 
             if self.profile.getReservationBid() is not None:
                 self.reservation_bid_utility = self.profile.getUtility(
@@ -158,19 +149,24 @@ class AcceptanceAgent:
 
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid() if obs is not None else None
+        self.opponent_model.update(received_bid)
+        opp_utility = self.opponent_model.get_predicted_utility(received_bid)
         # self.opponent_model.update(received_bid)
         self.received_utils = np.append(self.received_utils, [self.get_utility(received_bid)])
 
         # find a good bid based on the utility goals
         target = self.get_target_utility()
-        bid = self.find_bid(target)
+        self.target = self.target if target is None else target
+        bid = self.find_bid()
         action = Offer(self.me, bid)
 
         # build state vector for PPO
         received_util = float(self.get_utility(received_bid))
+        self.last_received_utils.append(received_util)
+        self.last_received_utils.pop(0)
         progress = self.progress.get(time.time() * 1000)
         utility_of_next_bid = 0 if bid is None else self.get_utility(bid)
-        state = [received_util, utility_of_next_bid, self.opp_concession, target, progress]
+        state = self.last_received_utils + [opp_utility, progress]
         assert len(state) == PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
@@ -178,15 +174,16 @@ class AcceptanceAgent:
         assert len(accept) == PPO_PARAMETERS["action_dim"]
         # print(utility_of_next_bid)
         # return Accept if the received offer is better than our goal
-        if accept[0] > accept[1] and random.randint(0, 100) >= 70:
-            # print("accepted", target, utility_of_next_bid, received_util,)
-            return Accept(self.me, received_bid)
+        # if accept[0] > accept[1]:
+        #     # print("accepted", target, utility_of_next_bid, received_util,)
+        #     return Accept(self.me, received_bid)
 
         return action
 
-    def find_bid(self, util_goal) -> Bid:
-
-        while self.bids_utility_map[self.all_bids[self.acceptability_index]] > util_goal:
+    def find_bid(self) -> Bid:
+        while self.bids_utility_map[
+            self.all_bids[self.acceptability_index]] > self.target and self.acceptability_index < len(
+                self.all_bids) - 1:
             self.acceptability_index = self.acceptability_index + 1
 
         acceptable = self.all_bids[0:self.acceptability_index]
@@ -196,7 +193,7 @@ class AcceptanceAgent:
 
         random.shuffle(acceptable)
         bid = acceptable[0]
-
+        # print(self.target, self.get_utility(bid))
         return bid
 
     def get_utility(self, bid: Bid) -> float:
@@ -226,7 +223,8 @@ class AcceptanceAgent:
 
     def compute_width(self):
         avg = self.compute_average()
-        variance = np.mean(self.received_utils ** 2 - avg ** 2)
+        variance = np.abs(np.mean(self.received_utils ** 2 - avg ** 2))
+        # print("variance:",variance)
         return np.sqrt(12 * variance)
 
     def save(self, checkpoint_path):
@@ -242,8 +240,7 @@ class AcceptanceAgent:
     ############################### training method of agent ###############################
     ########################################################################################
     def train(
-            self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
-    ) -> None:
+            self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str) -> list:
         log_dir_path = Path("logs")
         # create results directory if it does not exist
         if not log_dir_path.exists():
@@ -286,6 +283,7 @@ class AcceptanceAgent:
 
             log_running_reward.append(episode_reward)
             episode_count += 1
+           # print("episode done")
 
             # update PPO agent every n sessions
             if episode_count % UPDATE_EPISODE_FREQ == 0:
@@ -319,3 +317,4 @@ class AcceptanceAgent:
         print(f"Total training time: {time.time() - start_time_sec}")
         print("Episode count:", episode_count)
         print("=" * 100)
+        return log_running_reward

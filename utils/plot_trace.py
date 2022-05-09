@@ -1,15 +1,21 @@
 from collections import defaultdict
+
+import numpy as np
 import plotly.graph_objects as go
 import os
 
 
-def plot_nash_kalai_pareto(results_trace: dict, nash_point, kalai_point, pareto_utilities, plot_file: str):
+def plot_nash_kalai_pareto(results_trace: dict, nash_point, kalai_point, pareto_utilities, plot_file: str, switch):
     # Negotiation trace
     utilities = defaultdict(lambda: defaultdict(lambda: {"x": [], "y": [], "bids": []}))
     accept = {"x": [], "y": [], "bids": []}
 
-    agentsNames = ["me", "opponent"]
-    print(results_trace["actions"][len(results_trace["actions"]) - 1])
+    if switch:
+        agentsNames = ["opponent", "me"]
+    else:
+        agentsNames = ["me", "opponent"]
+
+    # print(results_trace["actions"][len(results_trace["actions"]) - 1])
     for index, action in enumerate(results_trace["actions"], 1):
         if "Offer" in action:
             offer = action["Offer"]
@@ -17,19 +23,22 @@ def plot_nash_kalai_pareto(results_trace: dict, nash_point, kalai_point, pareto_
 
             if actor not in agentsNames:
                 agentsNames.append(actor)
+                print(actor)
 
             for agent, util in offer["utilities"].items():
                 utilities[agent][actor]["x"].append(index)
                 utilities[agent][actor]["y"].append(util)
-                #utilities[agent][actor]["bids"].append(offer["bid"]["issuevalues"])
+                # utilities[agent][actor]["bids"].append(offer["bid"]["issuevalues"])
 
         elif "Accept" in action:
             offer = action["Accept"]
             index -= 1
             for agent, util in offer["utilities"].items():
-                accept["x"].append(index)
-                accept["y"].append(util)
-                #accept["bids"].append(offer["bid"]["issuevalues"])
+                if agent == agentsNames[0]:
+                    accept["x"].append(util)
+                elif agent == agentsNames[1]:
+                    accept["y"].append(util)
+                # accept["bids"].append(offer["bid"]["issuevalues"])
 
     agent1 = agentsNames[0]
     agent2 = agentsNames[1]
@@ -62,7 +71,7 @@ def plot_nash_kalai_pareto(results_trace: dict, nash_point, kalai_point, pareto_
             x=[nash_point[0]],
             y=[nash_point[1]],
             name="nash",
-            marker={"color": "green", "size": 15},
+            marker={"color": "yellow", "size": 15},
             hoverinfo="skip",
         )
     )
@@ -78,7 +87,17 @@ def plot_nash_kalai_pareto(results_trace: dict, nash_point, kalai_point, pareto_
             hoverinfo="skip",
         )
     )
-
+    # Agreement point
+    fig.add_trace(
+        go.Scatter(
+            mode="markers",
+            x=accept["x"],
+            y=accept["y"],
+            name="agreement",
+            marker={"color": "purple", "size": 15},
+            hoverinfo="skip",
+        )
+    )
     # Pareto frontier
     fig.add_trace(
         go.Scatter(
@@ -115,8 +134,8 @@ def plot_nash_kalai_pareto(results_trace: dict, nash_point, kalai_point, pareto_
         },
     )
 
-    fig.update_xaxes(title_text="profileA", range=[0, 1.01], ticks="outside")
-    fig.update_yaxes(title_text="profileB", range=[0, 1.01], ticks="outside")
+    fig.update_xaxes(title_text=agent1, range=[0, 1.01], ticks="outside")
+    fig.update_yaxes(title_text=agent2, range=[0, 1.01], ticks="outside")
     fig.write_html(f"{os.path.splitext(plot_file)[0]}.html")
 
 
@@ -132,7 +151,7 @@ def plot_trace(results_trace: dict, plot_file: str):
             for agent, util in offer["utilities"].items():
                 utilities[agent][actor]["x"].append(index)
                 utilities[agent][actor]["y"].append(util)
-               #utilities[agent][actor]["bids"].append(offer["bid"]["issuevalues"])
+            # utilities[agent][actor]["bids"].append(offer["bid"]["issuevalues"])
 
         elif "Accept" in action:
             offer = action["Accept"]
@@ -140,7 +159,7 @@ def plot_trace(results_trace: dict, plot_file: str):
             for agent, util in offer["utilities"].items():
                 accept["x"].append(index)
                 accept["y"].append(util)
-                #accept["bids"].append(offer["bid"]["issuevalues"])
+                # accept["bids"].append(offer["bid"]["issuevalues"])
 
     fig = go.Figure()
     fig.add_trace(
@@ -192,3 +211,31 @@ def plot_trace(results_trace: dict, plot_file: str):
     fig.update_xaxes(title_text="round", range=[0, index + 1], ticks="outside")
     fig.update_yaxes(title_text="utility", range=[0, 1], ticks="outside")
     fig.write_html(f"{os.path.splitext(plot_file)[0]}.html")
+
+#TODO investigate
+def plot_training(rewards: list, plot_file: str):
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            mode="lines+markers",
+            x=np.arange(len(rewards)),
+            y=rewards,
+            name="negotiation_trace",
+            marker={"color": "green"},
+            hoverinfo="text",
+        )
+    )
+    fig.update_xaxes(title_text="session", range=[0, len(rewards)], ticks="outside")
+    fig.update_yaxes(title_text="utility", range=[0, 1], ticks="outside")
+    fig.write_html(f"{os.path.splitext(plot_file)[0]}.html")
+
+def distance_to_nash(results_trace: dict, nash_point, switch):
+    reward = results_trace["actions"][len(results_trace["actions"]) - 1]['Accept']['utilities']['me']
+    opp_reward = results_trace["actions"][len(results_trace["actions"]) - 1]['Accept']['utilities']['opponent']
+    if switch:
+        utils = np.array([opp_reward, reward])
+    else:
+        utils = np.array([reward, opp_reward])
+    nash = np.array(nash_point)
+    dist = np.linalg.norm(utils - nash)
+    return dist

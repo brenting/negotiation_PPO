@@ -12,13 +12,15 @@ from environment.opponents import (
 )
 
 # collect domains and opponents for trainig (don't initialise the opponents)
-domains = get_domains("environment/domains/train")
+from utils.plot_trace import plot_training
+
+domains = get_domains("environment/domains/train") #[0]
 opponents = (
     ConcederAgent,
     HardlinerAgent,
     LinearAgent,
-    #RandomAgent,
-    #StupidAgent,
+    # RandomAgent,
+    # StupidAgent,
 )
 
 # create environment and PPO agent
@@ -29,6 +31,7 @@ agent = AcceptanceAgent()
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-
-agent.train(env=env, time_budget_sec=400, checkpoint_path=checkpoint_path)
+rewards = agent.train(env=env, time_budget_sec=60, checkpoint_path=checkpoint_path)
+print(rewards)
 agent.save(checkpoint_path)
+plot_training(rewards, "results/training_plot.html")

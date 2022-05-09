@@ -48,6 +48,8 @@ class NegotiationEnv(gym.Env):
         self.my_utility_function = None
         self.opp_utility_function = None
         self.trace = {"actions": []}
+        self.my_domain = None
+        self.opp_domain = None
 
     def step(self, action: Inform) -> tuple[Action, float, bool, None]:
         if self.progress.get(time.time() * 1000) == 1:
@@ -63,7 +65,7 @@ class NegotiationEnv(gym.Env):
             self.opponent.notifyChange(Finished(agreements))
             my_reward = float(self.my_utility_function.getUtility(action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
-            return None, my_reward ** 3, True, opp_reward  # observation, reward, done, info
+            return None, my_reward, True, opp_reward  # observation, reward, done, info
 
         observation: Action = self.opponent.notifyChange(YourTurn())
 
@@ -79,7 +81,7 @@ class NegotiationEnv(gym.Env):
             self.opponent.notifyChange(Finished(agreements))
             my_reward = float(self.my_utility_function.getUtility(action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
-            return None, my_reward ** 3, True, opp_reward  # observation, reward, done, info
+            return None, my_reward, True, opp_reward  # observation, reward, done, info
 
         return observation, 0.0, False, None  # observation, reward, done, info
 
@@ -90,6 +92,8 @@ class NegotiationEnv(gym.Env):
         self.trace = {"actions": []}
         self.current_domain = domain
         self.opp_utility_function = get_utility_function(domain[0])
+        self.my_domain = domain[1]
+        self.opp_domain = domain[0]
         self.my_utility_function = get_utility_function(domain[1])
 
         self.progress = ProgressTime(self.deadline_ms, datetime.now())
@@ -141,19 +145,19 @@ class NegotiationEnv(gym.Env):
             my_reward = float(self.my_utility_function.getUtility(my_action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(my_action.getBid()))
             self.trace["actions"].append(
-                {"Offer": {"actor": "me", "utilities": {"mine": my_reward, "opponent": opp_reward}}})
+                {"Offer": {"actor": "me", "utilities": {"me": my_reward, "opponent": opp_reward}}})
 
         if isinstance(opp_action, Offer):
             my_reward = float(self.my_utility_function.getUtility(opp_action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(opp_action.getBid()))
             self.trace["actions"].append(
-                {"Offer": {"actor": "opponent", "utilities": {"mine": my_reward, "opponent": opp_reward}}})
+                {"Offer": {"actor": "opponent", "utilities": {"me": my_reward, "opponent": opp_reward}}})
 
         if isinstance(opp_action, Accept):
             my_reward = float(self.my_utility_function.getUtility(opp_action.getBid()))
             opp_reward = float(self.opp_utility_function.getUtility(opp_action.getBid()))
             self.trace["actions"].append(
-                {"Accept": {"actor": "opponent", "utilities": {"mine": my_reward, "opponent": opp_reward}}})
+                {"Accept": {"actor": "opponent", "utilities": {"me": my_reward, "opponent": opp_reward}}})
 
     def render(self, mode="human"):
         ...
