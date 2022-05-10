@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import cast
 
 import numpy as np
+from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
 from geniusweb.actions.Offer import Offer
 from geniusweb.actions.PartyId import PartyId
@@ -28,7 +29,7 @@ from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################
 PPO_PARAMETERS = {
-    "state_dim": 5,  # dimension of state space
+    "state_dim": 4,  # dimension of state space
     "action_dim": 2,  # dimension of action space
     "lr_actor": 0.0003,  # learning rate for actor network
     "lr_critic": 0.001,  # learning rate for critic network
@@ -74,6 +75,7 @@ class AcceptanceAgent:
         self.max_possible_utility = 0
         self.all_bids = None
         self.acceptability_index = 0
+        self.rewards = []
 
     def notifyChange(self, data: Inform):
         """MUST BE IMPLEMENTED
@@ -166,17 +168,17 @@ class AcceptanceAgent:
         self.last_received_utils.pop(0)
         progress = self.progress.get(time.time() * 1000)
         utility_of_next_bid = 0 if bid is None else self.get_utility(bid)
-        state = self.last_received_utils + [opp_utility, progress]
+        state = self.last_received_utils + [progress]
         assert len(state) == PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
         accept = self.ppo.select_action(state)
         assert len(accept) == PPO_PARAMETERS["action_dim"]
-        # print(utility_of_next_bid)
+
         # return Accept if the received offer is better than our goal
-        # if accept[0] > accept[1]:
-        #     # print("accepted", target, utility_of_next_bid, received_util,)
-        #     return Accept(self.me, received_bid)
+        if accept[0] > accept[1]:
+            # print("accepted", target, utility_of_next_bid, received_util,)
+            return Accept(self.me, received_bid)
 
         return action
 
@@ -280,12 +282,10 @@ class AcceptanceAgent:
                 self.ppo.buffer.is_terminals.append(done)
 
                 episode_reward += reward
-            if episode_reward is None:
-                log_running_reward.append(0)
-            else:
-                log_running_reward.append(episode_reward)
+            log_running_reward.append(episode_reward)
+            self.rewards.append(episode_reward)
             episode_count += 1
-            #print(episode_count, log_running_reward )
+            #print(episode_count,self.rewards )
 
             # update PPO agent every n sessions
             if episode_count % UPDATE_EPISODE_FREQ == 0:

@@ -31,7 +31,6 @@ agent = AcceptanceAgent()
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-rewards = agent.train(env=env, time_budget_sec=300, checkpoint_path=checkpoint_path)
-print(rewards)
+agent.train(env=env, time_budget_sec=1500, checkpoint_path=checkpoint_path)
 agent.save(checkpoint_path)
-plot_training(rewards, "results/training_plot.html")
+plot_training(agent.rewards, "results/training_plot.html")
