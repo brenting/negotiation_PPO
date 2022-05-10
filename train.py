@@ -1,6 +1,5 @@
 from environment.negotiation import NegotiationEnv
 from environment.domains import get_domains
-from agent.ppo_agent import PPOAgent
 from agent.acceptance_agent import AcceptanceAgent
 from environment.opponents import (
     BoulwareAgent,
@@ -9,6 +8,7 @@ from environment.opponents import (
     LinearAgent,
     RandomAgent,
     StupidAgent,
+    SelfPlayAgent
 )
 
 # collect domains and opponents for trainig (don't initialise the opponents)
@@ -19,7 +19,7 @@ opponents = (
     ConcederAgent,
     HardlinerAgent,
     LinearAgent,
-    # RandomAgent,
+    RandomAgent,
     # StupidAgent,
 )
 
@@ -31,7 +31,7 @@ agent = AcceptanceAgent()
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-rewards = agent.train(env=env, time_budget_sec=60, checkpoint_path=checkpoint_path)
+rewards = agent.train(env=env, time_budget_sec=300, checkpoint_path=checkpoint_path)
 print(rewards)
 agent.save(checkpoint_path)
 plot_training(rewards, "results/training_plot.html")

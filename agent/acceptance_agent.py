@@ -143,9 +143,9 @@ class AcceptanceAgent:
             Action: Our action as a response on the Offer.
         """
         # read  opponent  concession factor from file
-        with open("evalue.txt", "r") as f:
-            self.opp_concession = float(f.read())
-            # print(self.opp_concession, type(self.opp_concession))
+        # with open("evalue.txt", "r") as f:
+        #     self.opp_concession = float(f.read())
+        #     # print(self.opp_concession, type(self.opp_concession))
 
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid() if obs is not None else None
@@ -280,10 +280,12 @@ class AcceptanceAgent:
                 self.ppo.buffer.is_terminals.append(done)
 
                 episode_reward += reward
-
-            log_running_reward.append(episode_reward)
+            if episode_reward is None:
+                log_running_reward.append(0)
+            else:
+                log_running_reward.append(episode_reward)
             episode_count += 1
-           # print("episode done")
+            #print(episode_count, log_running_reward )
 
             # update PPO agent every n sessions
             if episode_count % UPDATE_EPISODE_FREQ == 0:

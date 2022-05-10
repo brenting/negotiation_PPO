@@ -26,8 +26,8 @@ from geniusweb.references.Parameters import Parameters
 from geniusweb.simplerunner.NegoRunner import StdOutReporter
 
 from agent.utils.opponent_model import OpponentModel
-from test import test
 
+from test import test
 from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################

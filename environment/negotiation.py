@@ -127,12 +127,12 @@ class NegotiationEnv(gym.Env):
         observation = self.opponent.notifyChange(YourTurn())
 
         # write e value to file
-        f = open("evalue.txt", "w")
-        try:
-            e = self.opponent.getE()
-        except AttributeError:
-            e = 0.5
-        f.write(str(e))
+        # f = open("evalue.txt", "w")
+        # try:
+        #     e = self.opponent.getE()
+        # except AttributeError:
+        #     e = 0.5
+        # f.write(str(e))
 
         return observation  # reward, done, info can't be included
 
