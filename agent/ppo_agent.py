@@ -99,7 +99,7 @@ class PPOAgent:
 
             self.opponent_model = OpponentModel(self.domain)
 
-    def select_action(self, obs: Offer) -> Action:
+    def select_action(self, obs: Offer, training=True) -> Action:
         """Method to return an action when it is our turn.
 
         Args:
@@ -121,7 +121,7 @@ class PPOAgent:
         assert len(state) == PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
-        util_goals = self.ppo.select_action(state)
+        util_goals = self.ppo.select_action(state, training)
         assert len(util_goals) == PPO_PARAMETERS["action_dim"]
 
         # return Accept if the reveived offer is better than our goal
