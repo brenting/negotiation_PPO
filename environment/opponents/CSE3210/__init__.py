@@ -13,7 +13,6 @@ from .agent27.agent27 import Agent27
 from .agent29.agent29 import Agent29
 from .agent32.agent32 import Agent32
 from .agent33.agent33 import Agent33
-from .agent34.agent34 import Agent34
 from .agent41.agent41 import Agent41
 from .agent43.agent43 import Agent43
 from .agent50.agent50 import Agent50
