@@ -180,7 +180,7 @@ class Agent70(DefaultParty):
                 bid = self.bestBid                              #it is assumed that the opponent will always accept a bid they have previously made, so this garuntees an agreement.
             
             elif(self.sane and self._progress.get(time.time() * 1000) >= self.smartBidStart):   #if it is nearing the end of bidding, then start trying to make bids that appease both parties
-                print(f"finding good bid with minimumUtil={self.minimumUtil}")
+                # print(f"finding good bid with minimumUtil={self.minimumUtil}")
                 bid = self.constructGoodBid()                        #findGoodBid constructs a bid that both parties will find favourable
 
                 self.minimumUtil -= ((self.minimumUtil - self.bestUtil)*(self.aggression))    #in the case that this bid is rejected, and bidding continues, lower the minimum acceptable utility score
