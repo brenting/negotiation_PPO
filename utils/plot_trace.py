@@ -169,7 +169,7 @@ def plot_trace(results_trace: dict, plot_file: str):
             x=accept["x"],
             y=accept["y"],
             name="agreement",
-            marker={"color": "green", "size": 15},
+            marker={"color": "green", "size": 30},
             hoverinfo="skip",
         )
     )

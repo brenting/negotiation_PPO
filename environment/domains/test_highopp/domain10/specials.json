@@ -1,0 +1,174 @@
+{
+  "size": 4096,
+  "opposition": 0.4528260663225326,
+  "nash": {
+    "bid": {
+      "issueA": "valueJ",
+      "issueB": "valueG",
+      "issueC": "valueG",
+      "issueD": "valueB"
+    },
+    "utility": [
+      0.9127351276,
+      0.6529684408
+    ]
+  },
+  "kalai": {
+    "bid": {
+      "issueA": "valueO",
+      "issueB": "valueG",
+      "issueC": "valueG",
+      "issueD": "valueB"
+    },
+    "utility": [
+      0.6806925772,
+      0.6789171196
+    ]
+  },
+  "pareto_front": [
+    {
+      "bid": {
+        "issueA": "valueK",
+        "issueB": "valueG",
+        "issueC": "valueF",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.2459758019,
+        1.0
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueK",
+        "issueB": "valueG",
+        "issueC": "valueB",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.2649079639,
+        0.993010402
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueO",
+        "issueB": "valueG",
+        "issueC": "valueF",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.3218470747,
+        0.9071686788
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueO",
+        "issueB": "valueG",
+        "issueC": "valueB",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.3407792367,
+        0.9001790808
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueJ",
+        "issueB": "valueG",
+        "issueC": "valueF",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.5538896251000001,
+        0.88122
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueJ",
+        "issueB": "valueG",
+        "issueC": "valueB",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.5728217871,
+        0.874230402
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueK",
+        "issueB": "valueG",
+        "issueC": "valueG",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.6048213043999999,
+        0.7717484408
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueJ",
+        "issueB": "valueI",
+        "issueC": "valueF",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.6411544975,
+        0.6985553536
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueJ",
+        "issueB": "valueI",
+        "issueC": "valueB",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.6600866594999999,
+        0.6915657556
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueO",
+        "issueB": "valueG",
+        "issueC": "valueG",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.6806925772,
+        0.6789171196
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueJ",
+        "issueB": "valueG",
+        "issueC": "valueG",
+        "issueD": "valueB"
+      },
+      "utility": [
+        0.9127351276,
+        0.6529684408
+      ]
+    },
+    {
+      "bid": {
+        "issueA": "valueJ",
+        "issueB": "valueI",
+        "issueC": "valueG",
+        "issueD": "valueB"
+      },
+      "utility": [
+        1.0,
+        0.4703037943999999
+      ]
+    }
+  ]
+}
