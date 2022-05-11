@@ -1,7 +1,6 @@
 from .agent2.agent2 import Agent2
 from .agent3.agent3 import Agent3
 from .agent7.agent7 import Agent7
-from .agent9.agent9 import Agent9
 from .agent11.agent11 import Agent11
 from .agent14.agent14 import Agent14
 from .agent18.agent18 import Agent18
