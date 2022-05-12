@@ -101,7 +101,7 @@ class Agent2(DefaultParty):
                 self._last_received_bid = cast(Offer, action).getBid()
         # YourTurn notifies you that it is your turn to act
         elif isinstance(info, YourTurn):
-            action = self._myTurn()
+            action = self._my_turn()
             if isinstance(self._progress, ProgressRounds):
                 self._progress = self._progress.advance()
             return action
