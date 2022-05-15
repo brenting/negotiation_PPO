@@ -15,6 +15,7 @@ from environment.opponents import (
 
 domains = get_domains("environment/domains/train")
 opponents = (
+    # BoulwareAgent,
     # ConcederAgent,
     # HardlinerAgent,
     # LinearAgent,
@@ -24,7 +25,7 @@ opponents = (
 )
 
 # create environment and PPO agent
-env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
+env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=1000)
 agent = PPOAgent()
 
 # set checkpoint path for intermediate model checkpoints

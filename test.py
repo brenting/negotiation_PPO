@@ -3,7 +3,6 @@ import torch
 from agent.utils.ppo import DEVICE
 from environment.negotiation import NegotiationEnv
 from environment.domains import get_domains
-# from agent.ppo_agent import PPOAgent
 from environment.opponents import (
     BoulwareAgent,
     ConcederAgent,
@@ -13,6 +12,35 @@ from environment.opponents import (
     StupidAgent,
     # SelfPlayAgent
 )
+from environment.opponents.CSE3210 import (
+    Agent2,
+    Agent3,
+    Agent7,
+    Agent11,
+    Agent14,
+    Agent18,
+    Agent19,
+    Agent22,
+    Agent24,
+    Agent25,
+    Agent26,
+    Agent27,
+    Agent29,
+    Agent32,
+    Agent33,
+    Agent41,
+    Agent43,
+    Agent50,
+    Agent52,
+    Agent55,
+    Agent58,
+    Agent61,
+    Agent64,
+    Agent67,
+    Agent68,
+    Agent70,
+    Agent78,
+)
 
 
 def test(agent):
@@ -20,22 +48,49 @@ def test(agent):
     # collect domains and opponents for testing (don't initialise the opponents)--
     domains = get_domains("environment/domains/test")
     opponents = (
-        BoulwareAgent,
-        ConcederAgent,
-        HardlinerAgent,
-        LinearAgent,
-        RandomAgent,
-        StupidAgent,
+        Agent2,
+        Agent3,
+        Agent7,
+        Agent11,
+        Agent14,
+        Agent18,
+        Agent19,
+        Agent22,
+        Agent24,
+        Agent25,
+        Agent26,
+        Agent27,
+        Agent29,
+        Agent32,
+        Agent33,
+        Agent41,
+        Agent43,
+        Agent50,
+        Agent52,
+        Agent55,
+        Agent58,
+        Agent61,
+        Agent64,
+        Agent67,
+        Agent68,
+        Agent70,
+        Agent78,
+        # BoulwareAgent,
+        # ConcederAgent,
+        # HardlinerAgent,
+        # LinearAgent,
+        # RandomAgent,
+        # StupidAgent,
         # SelfPlayAgent
     )
 
     # create environment and PPO agent
-    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
+    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=1000)
 
     # test on 50 random negotiation sessions and gather average results
     rewards = []
     opp_rewards = []
-    for _ in range(200):
+    for _ in range(100):
         obs = env.reset(agent)
         done = False
         while not done:

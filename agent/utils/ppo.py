@@ -200,5 +200,5 @@ class PPO:
         torch_load = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
         self.policy_old.load_state_dict(torch_load['policy'])
         self.policy.load_state_dict(torch_load['policy'])
-        self.policy_old.set_action_std(torch_load['action_std'])
-        self.policy.set_action_std(torch_load['action_std'])
+        self.policy_old.set_action_std(0.01)
+        self.policy.set_action_std(0.01)

@@ -46,11 +46,11 @@ PPO_PARAMETERS = {
 #####################################################
 
 ################## other parameters #################
-LOG_FREQ = 200  # log avg reward in the interval (in num episode)
-SAVE_MODEL_FREQ = 200  # save model frequency (in num episode)
-ACTION_STD_DECAY_FREQ = 250  # action_std decay frequency (in num episode)
-UPDATE_EPISODE_FREQ = 100  # update policy every n episodes
-TEST_FREQ = 500
+LOG_FREQ = 400  # log avg reward in the interval (in num episode)
+SAVE_MODEL_FREQ = 400  # save model frequency (in num episode)
+ACTION_STD_DECAY_FREQ = 500  # action_std decay frequency (in num episode)
+UPDATE_EPISODE_FREQ = 400  # update policy every n episodes
+TEST_FREQ = 800
 #####################################################
 
 
@@ -153,7 +153,7 @@ class PPOAgent:
         # TODO: Implement NSGA-II version?
         # compose a list of all possible bids
         best_difference = 99999.0
-        best_bid = Bid({})
+        best_bid = None
 
         # take 1000 random attempts to find a bid close to both utility goals
         for _ in range(1000):
@@ -162,6 +162,8 @@ class PPOAgent:
             opp_util = self.opponent_model.get_predicted_utility(bid)
             difference = np.sum(np.square(util_goals - np.array([my_util, opp_util])))
             if difference < best_difference and my_util > util_goals[0]:
+                best_difference, best_bid = difference, bid
+            if best_bid is None:
                 best_difference, best_bid = difference, bid
 
         return best_bid
@@ -225,7 +227,7 @@ class PPOAgent:
 
                 # saving reward and is_terminals
                 # self.ppo.buffer.rewards.append((reward * 2.0 + opp_reward) / 3.0)
-                self.ppo.buffer.rewards.append((2.0 * reward + opp_reward) / 3.0)
+                self.ppo.buffer.rewards.append((1.0 * reward + 0.0 * opp_reward) / 1.0)
                 self.ppo.buffer.is_terminals.append(done)
 
                 # if done:

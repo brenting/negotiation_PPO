@@ -48,7 +48,7 @@ PPO_PARAMETERS = {
     "lr_actor": 0.0003,  # learning rate for actor network
     "lr_critic": 0.001,  # learning rate for critic network
     "gamma": 1,  # discount factor
-    "K_epochs": 10,  # update policy for K epochs in one PPO update
+    "K_epochs": 3,  # update policy for K epochs in one PPO update
     "eps_clip": 0.2,  # clip parameter for PPO
     "action_std": 0.6,  # starting std for action distribution (Multivariate Normal)
     "action_std_decay_rate": 0.05,  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
@@ -64,9 +64,9 @@ PPO_PARAMETERS = {
 
 LOG_FREQ = 100  # log avg reward in the interval (in num episode)
 SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
-ACTION_STD_DECAY_FREQ = 250  # action_std decay frequency (in num episode)
+ACTION_STD_DECAY_FREQ = 150  # action_std decay frequency (in num episode)
 UPDATE_EPISODE_FREQ = 100  # update policy every n episodes
-NUMBER_OF_AGENTS = 10
+NUMBER_OF_AGENTS = 5
 
 
 class SelfPlayAgent(DefaultParty):

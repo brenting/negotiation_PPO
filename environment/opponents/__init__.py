@@ -5,4 +5,3 @@ from .linear_agent.linear_agent import LinearAgent
 from .random_agent.random_agent import RandomAgent
 from .stupid_agent.stupid_agent import StupidAgent
 from .self_play_agent.self_play_agent import SelfPlayAgent
-
