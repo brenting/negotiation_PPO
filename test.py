@@ -11,6 +11,21 @@ from environment.opponents import (
     RandomAgent,
     StupidAgent,
 )
+from environment.opponents.CSE3210 import (
+    Agent2,
+    Agent7,
+    Agent9,
+    Agent11,
+    Agent3,
+    Agent14,
+    Agent18,
+    Agent19,
+    Agent22,
+    Agent24,
+    Agent25,
+    Agent26,
+    Agent27
+)
 
 # collect domains and opponents for testing (don't initialise the opponents)
 from utils.plot_trace import plot_nash_kalai_pareto, plot_trace, distance_to_nash
@@ -20,7 +35,18 @@ def test():
     global agent, rewards
     domains = get_domains("environment/domains/test")
     opponents = (
-        BoulwareAgent,
+        #Agent2,
+        Agent7,
+        Agent11,
+        Agent3,
+        Agent14,
+        Agent18,
+        Agent19,
+        Agent22,
+        Agent24,
+        Agent25,
+        Agent26,
+        Agent27
 
     )
     # TODO add more opponents
@@ -35,7 +61,7 @@ def test():
     my_prof = None
     switch = False
     nash_avg = []
-    for _ in range(50):
+    for _ in range(1):
         obs = env.reset(agent)
         my_prof = str(env.my_domain)[-13:]
         done = False
@@ -60,8 +86,9 @@ def test():
             if done:
                 if my_prof == "profileB.json":
                     switch = True
-                nash_avg.append(distance_to_nash(env.trace, nash_point, switch))
+
                 try:
+                    nash_avg.append(distance_to_nash(env.trace, nash_point, switch))
                     print(env.trace["actions"][len(env.trace["actions"]) - 1]['Accept']['utilities'],
                           env.current_domain[0])
                     reward = env.trace["actions"][len(env.trace["actions"]) - 1]['Accept']['utilities']['me']
