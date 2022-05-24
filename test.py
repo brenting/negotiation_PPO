@@ -1,4 +1,6 @@
+import copy
 from decimal import Decimal
+from tudelft.utilities.immutablelist.AbstractImmutableList import AbstractImmutableList
 from math import sqrt
 from numpy import average
 from agent import ppo_agent
@@ -10,6 +12,9 @@ from agent.ppo_agent import PPOAgent
 import matplotlib.pyplot as plt
 import numpy as np
 import timeit
+import types
+import functools
+
 from environment.opponents import (
     BoulwareAgent,
     ConcederAgent,
@@ -18,6 +23,15 @@ from environment.opponents import (
     RandomAgent,
     StupidAgent,
 )
+
+def copy_func(f):
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                           argdefs=f.__defaults__,
+                           closure=f.__closure__)
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return g
 
 def pearsonCorrelationOfBids(domain: Domain, real_utility, predicted_utility):
     #print(actual_utility.getDomain)
@@ -59,7 +73,7 @@ opponents = (
 )
 
 # create environment and PPO agent
-env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000000)
+env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
 agent = PPOAgent.load("checkpoint.pkl")
 
 # test on 50 random negotiation sessions and gather average results
@@ -69,33 +83,38 @@ for _ in range(50):
     obs = env.reset(agent)
     done = False
     step = 0
+    estimed_opp_Smith = []
+    estimed_opp_Perceptron = []
     sampleFrequency = 1
-    accuracySmith = []
-    accuracyPerceptron = []
+
     while not done:
         action = agent.select_action(obs)
         obs, reward, done, opp_reward = env.step(action)
-
+        estimed_opp_Smith.append(copy.deepcopy(agent.opponent_model))
+        estimed_opp_Perceptron.append(copy.deepcopy(agent.opponent_model2))
         if done:
-            accuracySmith.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model.get_predicted_utility))
-            accuracyPerceptron.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model2.get_predicted_utility))
-            print("Pearson Correlation of Bids:" + str(accuracySmith))
             rewards.append(reward)
             print("Reward:" + str(reward) + ", Opponent's reward:" + str(opp_reward) + ", reached aggrement after " + str(step) + " step(s)")
-            plt.title("Accuracy of the Smith Frequency Model")
-            plt.xlabel("Number of exchanged bids")
-            plt.ylabel("Pearson correlation of bids")
-            plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracySmith,label = "Smith Model")
-            plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracyPerceptron,label = "Perceptron Model")
-            plt.legend()
-            plt.draw()
             opp_rewards.append(opp_reward)
             break
-        if step % sampleFrequency == 0:
-            accuracySmith.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model.get_predicted_utility))
-            accuracyPerceptron.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model2.get_predicted_utility))
         step += 1
+
+    accuracySmith = []
+    accuracyPerceptron = []
+    for f in estimed_opp_Smith:
+        accuracySmith.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,f.get_predicted_utility))
+    for f in estimed_opp_Perceptron:    
+        accuracyPerceptron.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,f.get_predicted_utility))
+    
+    plt.title("Accuracy of the Smith Frequency Model")
+    plt.xlabel("Number of exchanged bids")
+    plt.ylabel("Pearson correlation of bids")
+    plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracySmith,label = "Smith Model")
+    plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracyPerceptron,label = "Perceptron Model")
+    plt.legend()
+    plt.draw()
     plt.show()
+
 
 # print results
 print(f"Average reward: {sum(rewards)/len(rewards)}")

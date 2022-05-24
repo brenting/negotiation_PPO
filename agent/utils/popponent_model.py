@@ -18,8 +18,7 @@ class PerceptronOpponentModel:
         self.issueValues = {
             issueName: {key : 0.5 for key in issueValueSet.getValues()} for issueName,issueValueSet in domain.getIssuesValues().items()
         }
-        print(domain.getIssuesValues())
-        print(self.issueValues)
+        # print("Initializing Perceptron opponent model for " +str(self.N) + " issues")
 
     def update(self, bid: Bid):
         for epoch in range(self.N):
@@ -27,7 +26,7 @@ class PerceptronOpponentModel:
                 perceptronUtility = self.get_predicted_utility(bid)
                 estimatedUtility = 1
                 self.issueValues[issueName][issueValue] = self.issueValues[issueName][issueValue] + self.learning_rate * (estimatedUtility - perceptronUtility) * self.issueValues[issueName][issueValue]
-                
+
             for issueName in self.domain.getIssues():
                 perceptronUtility = self.get_predicted_utility(bid)
                 estimatedUtility = 1

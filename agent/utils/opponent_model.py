@@ -11,12 +11,12 @@ class OpponentModel:
     def __init__(self, domain: Domain):
         self.offers = []
         self.domain = domain
-        print(type(domain.getIssues()))
-        print(domain.getIssuesValues())
+        # print(type(domain.getIssues()))
+        # print(domain.getIssuesValues())
         self.issue_estimators = {
             i: IssueEstimator(v) for i, v in domain.getIssuesValues().items()
         }
-        print(self.issue_estimators)
+        # print(self.issue_estimators)
 
     def update(self, bid: Bid):
         # keep track of all bids received
