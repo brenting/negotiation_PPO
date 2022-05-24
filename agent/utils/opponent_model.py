@@ -1,4 +1,5 @@
 from collections import defaultdict
+from xml import dom
 
 from geniusweb.issuevalue.Bid import Bid
 from geniusweb.issuevalue.DiscreteValueSet import DiscreteValueSet
@@ -10,10 +11,12 @@ class OpponentModel:
     def __init__(self, domain: Domain):
         self.offers = []
         self.domain = domain
-
+        print(type(domain.getIssues()))
+        print(domain.getIssuesValues())
         self.issue_estimators = {
             i: IssueEstimator(v) for i, v in domain.getIssuesValues().items()
         }
+        print(self.issue_estimators)
 
     def update(self, bid: Bid):
         # keep track of all bids received

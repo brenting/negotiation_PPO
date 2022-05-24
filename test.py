@@ -19,11 +19,6 @@ from environment.opponents import (
     StupidAgent,
 )
 
-
-
-
-
-
 def pearsonCorrelationOfBids(domain: Domain, real_utility, predicted_utility):
     #print(actual_utility.getDomain)
     #print(predicted_utility.domain)
@@ -47,8 +42,10 @@ def pearsonCorrelationOfBids(domain: Domain, real_utility, predicted_utility):
         sum_of_products += (float(real_utility(bids.get(i)))-average_real_utility)*(predicted_utility(bids.get(i))-average_predicted_utility)
         realVar += (float(real_utility(bids.get(i)))-average_real_utility)**2
         predictedVar += (predicted_utility(bids.get(i))-average_predicted_utility)**2
-    
-    pearsonCorrelation = sum_of_products / sqrt(realVar * predictedVar)
+    if(realVar != 0 and predictedVar != 0):
+        pearsonCorrelation = sum_of_products / sqrt(realVar * predictedVar)
+    else:
+        pearsonCorrelation = 0
     stop = timeit.default_timer()
     print('Time to calculate pearson correlation: ', stop - start)  
 
@@ -73,25 +70,30 @@ for _ in range(50):
     done = False
     step = 0
     sampleFrequency = 1
-    timeEvolutionPearson = []
+    accuracySmith = []
+    accuracyPerceptron = []
     while not done:
         action = agent.select_action(obs)
         obs, reward, done, opp_reward = env.step(action)
 
         if done:
-            timeEvolutionPearson.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model.get_predicted_utility))
-            print("Pearson Correlation of Bids:" + str(timeEvolutionPearson))
+            accuracySmith.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model.get_predicted_utility))
+            accuracyPerceptron.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model2.get_predicted_utility))
+            print("Pearson Correlation of Bids:" + str(accuracySmith))
             rewards.append(reward)
             print("Reward:" + str(reward) + ", Opponent's reward:" + str(opp_reward) + ", reached aggrement after " + str(step) + " step(s)")
             plt.title("Accuracy of the Smith Frequency Model")
             plt.xlabel("Number of exchanged bids")
             plt.ylabel("Pearson correlation of bids")
-            plt.plot(np.append(np.arange(0,step,sampleFrequency),step),timeEvolutionPearson)
+            plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracySmith,label = "Smith Model")
+            plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracyPerceptron,label = "Perceptron Model")
+            plt.legend()
             plt.draw()
             opp_rewards.append(opp_reward)
             break
         if step % sampleFrequency == 0:
-            timeEvolutionPearson.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model.get_predicted_utility))
+            accuracySmith.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model.get_predicted_utility))
+            accuracyPerceptron.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,agent.opponent_model2.get_predicted_utility))
         step += 1
     plt.show()
 

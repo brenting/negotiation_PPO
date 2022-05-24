@@ -25,6 +25,7 @@ from geniusweb.references.Parameters import Parameters
 from geniusweb.simplerunner.NegoRunner import StdOutReporter
 
 from agent.utils.opponent_model import OpponentModel
+from agent.utils.popponent_model import PerceptronOpponentModel
 
 from .utils.ppo import PPO
 
@@ -68,7 +69,7 @@ class PPOAgent:
         self.settings: Settings = None
 
         self.opponent_model: OpponentModel = None
-
+        self.opponent_model2: PerceptronOpponentModel = None
         self.last_received_utils = [0.0, 0.0, 0.0]
 
     def notifyChange(self, data: Inform):
@@ -98,6 +99,7 @@ class PPOAgent:
             profile_connection.close()
 
             self.opponent_model = OpponentModel(self.domain)
+            self.opponent_model2 = PerceptronOpponentModel(self.domain)
 
     def select_action(self, obs: Offer, training=True) -> Action:
         """Method to return an action when it is our turn.
@@ -111,6 +113,7 @@ class PPOAgent:
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid()
         self.opponent_model.update(received_bid)
+        self.opponent_model2.update(received_bid)
 
         # build state vector for PPO
         received_util = float(self.get_utility(received_bid))
