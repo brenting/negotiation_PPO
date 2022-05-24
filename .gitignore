@@ -6,3 +6,5 @@ logs
 
 checkpoint.pkl
 *.sbatch
+/venv/
+/.idea/
