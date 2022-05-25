@@ -1,9 +1,7 @@
-from os import system
 import random
 import time
 from datetime import datetime
 from typing import Optional
-from xml import dom
 
 import gym
 from geniusweb.actions.Accept import Accept
@@ -20,7 +18,6 @@ from geniusweb.progress.ProgressTime import ProgressTime
 from geniusweb.references.Parameters import Parameters
 from geniusweb.references.ProfileRef import ProfileRef
 from geniusweb.references.ProtocolRef import ProtocolRef
-from numpy import array
 from tudelft_utilities_logging.Reporter import Reporter
 from uri.uri import URI
 
