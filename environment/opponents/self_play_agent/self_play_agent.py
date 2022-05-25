@@ -64,8 +64,8 @@ PPO_PARAMETERS = {
 
 LOG_FREQ = 100  # log avg reward in the interval (in num episode)
 SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
-ACTION_STD_DECAY_FREQ = 150  # action_std decay frequency (in num episode)
-UPDATE_EPISODE_FREQ = 100  # update policy every n episodes
+ACTION_STD_DECAY_FREQ = 40  # action_std decay frequency (in num episode)
+UPDATE_EPISODE_FREQ = 20  # update policy every n episodes
 NUMBER_OF_AGENTS = 5
 
 

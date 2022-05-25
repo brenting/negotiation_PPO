@@ -1,4 +1,5 @@
 import time
+import threading
 from pathlib import Path
 from random import randint
 from typing import cast
@@ -26,7 +27,7 @@ from geniusweb.references.Parameters import Parameters
 from geniusweb.simplerunner.NegoRunner import StdOutReporter
 
 from agent.utils.opponent_model import OpponentModel
-from test import test
+from evaluate import evaluate
 
 from .utils.ppo import PPO
 
@@ -46,11 +47,13 @@ PPO_PARAMETERS = {
 #####################################################
 
 ################## other parameters #################
-LOG_FREQ = 400  # log avg reward in the interval (in num episode)
-SAVE_MODEL_FREQ = 400  # save model frequency (in num episode)
-ACTION_STD_DECAY_FREQ = 500  # action_std decay frequency (in num episode)
-UPDATE_EPISODE_FREQ = 400  # update policy every n episodes
-TEST_FREQ = 800
+LOG_FREQ = 100  # log avg reward in the interval (in num episode)
+SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
+ACTION_STD_DECAY_FREQ = 200  # action_std decay frequency (in num episode)
+UPDATE_EPISODE_FREQ = 100  # update policy every n episodes
+TEST_FREQ = 100
+
+
 #####################################################
 
 
@@ -185,7 +188,7 @@ class PPOAgent:
     ############################### training method of agent ###############################
     ########################################################################################
     def train(
-        self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
+            self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
     ) -> None:
         log_dir_path = Path("logs")
         # create results directory if it does not exist
@@ -275,7 +278,10 @@ class PPOAgent:
                 print("model saved")
                 print("―" * 100)
             if episode_count % TEST_FREQ == 0:
-                test(PPOAgent.load(checkpoint_path))
+                agent = PPOAgent.load(checkpoint_path)
+                test_thread = TestThread("TestThread" + str(episode_count), agent)
+                test_thread.start()
+                # evaluate(agent)
 
         log_f.close()
         env.close()
@@ -284,3 +290,16 @@ class PPOAgent:
         print("=" * 100)
         print(f"Total training time: {time.time() - start_time_sec}")
         print("=" * 100)
+
+
+class TestThread(threading.Thread):
+
+    def __init__(self, name, agent):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.agent = agent
+
+    def run(self):
+        print("Starting " + self.name)
+        evaluate(self.agent)
+        print("Exiting " + self.name)
