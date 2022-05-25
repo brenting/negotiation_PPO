@@ -1,7 +1,9 @@
+from os import system
 import random
 import time
 from datetime import datetime
 from typing import Optional
+from xml import dom
 
 import gym
 from geniusweb.actions.Accept import Accept
@@ -18,6 +20,7 @@ from geniusweb.progress.ProgressTime import ProgressTime
 from geniusweb.references.Parameters import Parameters
 from geniusweb.references.ProfileRef import ProfileRef
 from geniusweb.references.ProtocolRef import ProtocolRef
+from numpy import array
 from tudelft_utilities_logging.Reporter import Reporter
 from uri.uri import URI
 
@@ -34,9 +37,10 @@ class NegotiationEnv(gym.Env):
         domains: tuple[tuple[URI, URI]],
         opponents: tuple[DefaultParty],
         deadline_ms: int,
+        seed = 42,
+        verbose = False
     ):
         super().__init__()
-
         self.domains = domains
         self.opponents = opponents
         self.deadline_ms = deadline_ms
@@ -44,6 +48,9 @@ class NegotiationEnv(gym.Env):
         self.opponent = None
         self.my_utility_function = None
         self.opp_utility_function = None
+
+        self.seed = seed
+        self.verbose = verbose
 
     def step(self, action: Inform) -> tuple[Action, float, bool, None]:
         if self.progress.get(time.time() * 1000) == 1:
@@ -75,12 +82,16 @@ class NegotiationEnv(gym.Env):
         return observation, 0.0, False, None  # observation, reward, done, info
 
     def reset(self, my_agent):
-        self.opponent: DefaultParty = random.choice(self.opponents)(VoidReporter())
-        domain = list(random.choice(self.domains))
+        self.opponent: DefaultParty = random.Random(self.seed).choice(self.opponents)(VoidReporter())
+        domain = list(random.Random(self.seed).choice(self.domains))
+        random.seed(self.seed)
         random.shuffle(domain)
-
+        self.seed += 1
         self.opp_utility_function = get_utility_function(domain[0])
         self.my_utility_function = get_utility_function(domain[1])
+
+        if self.verbose:
+            print("Picking new opponent: " + str(type(self.opponent).__name__))
 
         self.progress = ProgressTime(self.deadline_ms, datetime.now())
 
