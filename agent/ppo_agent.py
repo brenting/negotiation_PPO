@@ -1,9 +1,12 @@
+import threading
 import time
 from pathlib import Path
 from random import randint
 from typing import cast
 
 import numpy as np
+
+from environment.evaluate import evaluate
 from environment.negotiation import NegotiationEnv
 from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
@@ -48,6 +51,7 @@ LOG_FREQ = 100  # log avg reward in the interval (in num episode)
 SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
 ACTION_STD_DECAY_FREQ = 250  # action_std decay frequency (in num episode)
 UPDATE_EPISODE_FREQ = 10  # update policy every n episodes
+TEST_FREQ = 100
 #####################################################
 
 
@@ -141,7 +145,7 @@ class PPOAgent:
         all_bids = AllBidsList(domain)
 
         best_difference = 99999.0
-        best_bid = None
+        best_bid = all_bids.get(randint(0, all_bids.size() - 1))
 
         # take 1000 random attempts to find a bid close to both utility goals
         for _ in range(1000):
@@ -241,6 +245,11 @@ class PPOAgent:
                 print("model saved")
                 print("―" * 100)
 
+            if episode_count % TEST_FREQ == 0:
+                agent = PPOAgent.load(checkpoint_path)
+                test_thread = TestThread("TestThread" + str(episode_count), agent)
+                test_thread.start()
+
         log_f.close()
         env.close()
 
@@ -248,3 +257,17 @@ class PPOAgent:
         print("=" * 100)
         print(f"Total training time: {time.time() - start_time_sec}")
         print("=" * 100)
+
+
+class TestThread(threading.Thread):
+    def __init__(self, name, agent):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.agent = agent
+
+    def run(self):
+        print("Starting " + self.name)
+        a, b = evaluate(self.agent)
+        print(f"Average reward {self.name}: {a}")
+        print(f"Average opponent reward {self.name}: {b}")
+        print("Exiting " + self.name)
