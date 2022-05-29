@@ -1,19 +1,14 @@
 import copy
-from decimal import Decimal
-from tudelft.utilities.immutablelist.AbstractImmutableList import AbstractImmutableList
 from math import sqrt
 from numpy import average
 from agent import ppo_agent
 from environment.negotiation import NegotiationEnv
 from environment.domains import get_domains
-from geniusweb.bidspace import AllBidsList
-from geniusweb.issuevalue.Domain import Domain
+from agent.utils.pearson_correlation import PearsonCorrelation
 from agent.ppo_agent import PPOAgent
 import matplotlib.pyplot as plt
 import numpy as np
-import timeit
-import types
-import functools
+
 
 from environment.opponents import (
     BoulwareAgent,
@@ -23,53 +18,11 @@ from environment.opponents import (
     RandomAgent,
     StupidAgent,
 )
-
-def copy_func(f):
-    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
-    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
-                           argdefs=f.__defaults__,
-                           closure=f.__closure__)
-    g = functools.update_wrapper(g, f)
-    g.__kwdefaults__ = f.__kwdefaults__
-    return g
-
-def pearsonCorrelationOfBids(domain: Domain, real_utility, predicted_utility):
-    #print(actual_utility.getDomain)
-    #print(predicted_utility.domain)
-    start = timeit.default_timer()
-    bids = AllBidsList.AllBidsList(domain)
-    #print("Number of bids in bid space: " + str(bids.size()))
-    sum_real_utility = 0.0
-    sum_predicted_utility = 0.0
-    for i in range(bids.size()):
-        sum_real_utility += float(real_utility(bids.get(i)))
-        sum_predicted_utility += predicted_utility(bids.get(i))
-    average_real_utility = sum_real_utility / bids.size()
-    average_predicted_utility = sum_predicted_utility / bids.size()
-
-    #this is the top component of the pearson coefficient
-    sum_of_products = 0.0
-    #this are the bottom components of the pearson coefficient
-    realVar = 0.0
-    predictedVar = 0.0
-    for i in range(bids.size()):
-        sum_of_products += (float(real_utility(bids.get(i)))-average_real_utility)*(predicted_utility(bids.get(i))-average_predicted_utility)
-        realVar += (float(real_utility(bids.get(i)))-average_real_utility)**2
-        predictedVar += (predicted_utility(bids.get(i))-average_predicted_utility)**2
-    if(realVar != 0 and predictedVar != 0):
-        pearsonCorrelation = sum_of_products / sqrt(realVar * predictedVar)
-    else:
-        pearsonCorrelation = 0
-    stop = timeit.default_timer()
-    print('Time to calculate pearson correlation: ', stop - start)  
-
-    return pearsonCorrelation
     
-
 # collect domains and opponents for testing (don't initialise the opponents)
 domains = get_domains("environment/domains/test")
 opponents = (
-    BoulwareAgent,
+    ConcederAgent,
 )
 
 # create environment and PPO agent
@@ -101,12 +54,14 @@ for _ in range(50):
 
     accuracySmith = []
     accuracyPerceptron = []
+    pc = PearsonCorrelation(env.opp_utility_function.getDomain())
+
     for f in estimed_opp_Smith:
-        accuracySmith.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,f.get_predicted_utility))
+        accuracySmith.append(pc.pearsonCorrelationOfBids(env.opp_utility_function.getUtility,f.get_predicted_utility))
     for f in estimed_opp_Perceptron:    
-        accuracyPerceptron.append(pearsonCorrelationOfBids(env.opp_utility_function.getDomain(),env.opp_utility_function.getUtility,f.get_predicted_utility))
+        accuracyPerceptron.append(pc.pearsonCorrelationOfBids(env.opp_utility_function.getUtility,f.get_predicted_utility))
     
-    plt.title("Accuracy of the Smith Frequency Model")
+    plt.title("The evolution of the accuracy over the negotiation session")
     plt.xlabel("Number of exchanged bids")
     plt.ylabel("Pearson correlation of bids")
     plt.plot(np.append(np.arange(0,step,sampleFrequency),step),accuracySmith,label = "Smith Model")
