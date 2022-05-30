@@ -8,7 +8,7 @@ from environment.opponents import (
     LinearAgent,
     RandomAgent,
     StupidAgent,
-    SelfPlayAgent
+    SelfPlayAgent,
     CSE3210,
 )
 

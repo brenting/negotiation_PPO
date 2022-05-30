@@ -59,9 +59,6 @@ def test(agent):
     # create environment and PPO agent
     env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, seed=42)
 
-    # create environment and PPO agent
-    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
-
     # test on 50 random negotiation sessions and gather average results
     rewards = []
     opp_rewards = []
