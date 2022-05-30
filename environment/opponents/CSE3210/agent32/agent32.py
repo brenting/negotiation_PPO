@@ -114,6 +114,8 @@ class Agent32(DefaultParty):
     # This is done by analyzing the latest bits of the opponent.
     # It's not water tight but it functions good enough.
     def enemyConceiding(self):
+        if len(self.previousReceivedUtils) < 10:
+            return False
         value = np.std(self.previousReceivedUtils)
         last10Values = self.previousReceivedUtils[-10:]
         last5Better = (last10Values[0] + last10Values[1] + last10Values[2] + last10Values[3] + last10Values[4]) < (last10Values[-5] + last10Values[-1] + last10Values[-2] + last10Values[-3] + last10Values[-4])
