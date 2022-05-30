@@ -46,7 +46,7 @@ class NegotiationEnv(gym.Env):
         self.my_utility_function = None
         self.opp_utility_function = None
 
-        self.seed = seed
+        self.random = random.Random(seed)
         self.verbose = verbose
 
     def step(self, action: Inform) -> tuple[Action, float, bool, None]:
@@ -79,11 +79,10 @@ class NegotiationEnv(gym.Env):
         return observation, 0.0, False, None  # observation, reward, done, info
 
     def reset(self, my_agent):
-        self.opponent: DefaultParty = random.Random(self.seed).choice(self.opponents)(VoidReporter())
-        domain = list(random.Random(self.seed).choice(self.domains))
-        random.seed(self.seed)
-        random.shuffle(domain)
-        self.seed += 1
+        self.opponent: DefaultParty = self.random.choice(self.opponents)(VoidReporter())
+        domain = list(self.random.choice(self.domains))
+        self.random.shuffle(domain)
+
         self.opp_utility_function = get_utility_function(domain[0])
         self.my_utility_function = get_utility_function(domain[1])
 
