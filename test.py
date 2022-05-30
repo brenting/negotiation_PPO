@@ -43,7 +43,6 @@ from environment.opponents.CSE3210 import (
     Agent64,
     Agent67,
     Agent68,
-    Agent70,
     Agent78,
 )
 

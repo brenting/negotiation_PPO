@@ -281,7 +281,6 @@ class PPOAgent:
                 agent = PPOAgent.load(checkpoint_path)
                 test_thread = TestThread("TestThread" + str(episode_count), agent)
                 test_thread.start()
-                # evaluate(agent)
 
         log_f.close()
         env.close()
@@ -293,7 +292,6 @@ class PPOAgent:
 
 
 class TestThread(threading.Thread):
-
     def __init__(self, name, agent):
         threading.Thread.__init__(self)
         self.name = name
@@ -301,5 +299,7 @@ class TestThread(threading.Thread):
 
     def run(self):
         print("Starting " + self.name)
-        evaluate(self.agent)
+        a, b = evaluate(self.agent)
+        print(f"Average reward {self.name}: {a}")
+        print(f"Average opponent reward {self.name}: {b}")
         print("Exiting " + self.name)

@@ -1,17 +1,6 @@
-import torch
-
-from agent.utils.ppo import DEVICE
 from environment.negotiation import NegotiationEnv
 from environment.domains import get_domains
-from environment.opponents import (
-    BoulwareAgent,
-    ConcederAgent,
-    HardlinerAgent,
-    LinearAgent,
-    RandomAgent,
-    StupidAgent,
-    # SelfPlayAgent
-)
+
 from environment.opponents.CSE3210 import (
     Agent2,
     Agent3,
@@ -38,7 +27,6 @@ from environment.opponents.CSE3210 import (
     Agent64,
     Agent67,
     Agent68,
-    Agent70,
     Agent78,
 )
 
@@ -73,15 +61,7 @@ def evaluate(agent):
         Agent64,
         Agent67,
         Agent68,
-        Agent70,
         Agent78,
-        # BoulwareAgent,
-        # ConcederAgent,
-        # HardlinerAgent,
-        # LinearAgent,
-        # RandomAgent,
-        # StupidAgent,
-        # SelfPlayAgent
     )
 
     # create environment and PPO agent
@@ -97,11 +77,10 @@ def evaluate(agent):
             action = agent.select_action(obs)
             obs, reward, done, opp_reward = env.step(action)
             if done:
-                # print("Done, reward: " + str(reward) + " " + str(opp_reward))
                 rewards.append(reward)
                 opp_rewards.append(opp_reward)
                 break
 
     # print results
-    print(f"Average reward: {sum(rewards)/len(rewards)}")
-    print(f"Average opponent reward: {sum(opp_rewards)/len(opp_rewards)}")
+    return sum(rewards)/len(rewards), sum(opp_rewards)/len(opp_rewards)
+
