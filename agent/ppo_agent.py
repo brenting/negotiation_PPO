@@ -4,7 +4,6 @@ from random import randint
 from typing import cast
 
 import numpy as np
-from environment.negotiation import NegotiationEnv
 from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
 from geniusweb.actions.Offer import Offer
@@ -21,16 +20,16 @@ from geniusweb.profileconnection.ProfileConnectionFactory import (
     ProfileConnectionFactory,
 )
 from geniusweb.progress.ProgressTime import ProgressTime
-from geniusweb.references.Parameters import Parameters
 from geniusweb.simplerunner.NegoRunner import StdOutReporter
+from scipy import stats
 
 from agent.utils.opponent_model import OpponentModel
-
+from environment.negotiation import NegotiationEnv
 from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################
 PPO_PARAMETERS = {
-    "state_dim": 4,  # dimension of state space
+    "state_dim": 7,  # dimension of state space
     "action_dim": 2,  # dimension of action space
     "lr_actor": 0.0003,  # learning rate for actor network
     "lr_critic": 0.001,  # learning rate for critic network
@@ -48,6 +47,8 @@ LOG_FREQ = 100  # log avg reward in the interval (in num episode)
 SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
 ACTION_STD_DECAY_FREQ = 250  # action_std decay frequency (in num episode)
 UPDATE_EPISODE_FREQ = 10  # update policy every n episodes
+
+
 #####################################################
 
 
@@ -70,6 +71,7 @@ class PPOAgent:
         self.opponent_model: OpponentModel = None
 
         self.last_received_utils = [0.0, 0.0, 0.0]
+        self.received_bids = []
 
     def notifyChange(self, data: Inform):
         """MUST BE IMPLEMENTED
@@ -110,14 +112,37 @@ class PPOAgent:
         """
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid()
+        self.received_bids.append(received_bid)
         self.opponent_model.update(received_bid)
 
         # build state vector for PPO
-        received_util = float(self.get_utility(received_bid))
-        self.last_received_utils.append(received_util)
-        self.last_received_utils.pop(0)
+        number_of_bids = len(self.received_bids)
+
+        own_utilities = [float(self.get_utility(x)) for x in self.received_bids]
+        opp_utilities = [float(self.opponent_model.get_predicted_utility(x)) for x in self.received_bids]
+
+        own_mean = np.mean(own_utilities)
+        opp_mean = np.mean(opp_utilities)
+
+        own_std = np.std(own_utilities)
+        opp_std = np.std(opp_utilities)
+
+        own_median = np.median(own_utilities)
+        opp_median = np.median(opp_utilities)
+
+        own_mode = stats.mode(own_utilities)[0]
+        opp_mode = stats.mode(opp_utilities)[0]
+
+        own_range = np.ptp(own_utilities)
+        opp_range = np.ptp(opp_utilities)
+
+        corr = 1
+        if number_of_bids > 1:
+            corr, p_value = stats.pearsonr(own_utilities, opp_utilities)
+
         progress = self.progress.get(time.time() * 1000)
-        state = tuple(self.last_received_utils + [progress])
+        state = tuple(
+            [own_mean, own_std, own_median, own_mode, own_range, progress])
         assert len(state) == PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
@@ -125,7 +150,7 @@ class PPOAgent:
         assert len(util_goals) == PPO_PARAMETERS["action_dim"]
 
         # return Accept if the reveived offer is better than our goal
-        if util_goals[0] < received_util:
+        if util_goals[0] < float(self.get_utility(received_bid)):
             return Accept(self.me, received_bid)
 
         # find a good bid based on the utility goals
@@ -149,7 +174,7 @@ class PPOAgent:
             my_util = self.get_utility(bid)
             opp_util = self.opponent_model.get_predicted_utility(bid)
             difference = np.sum(np.square(util_goals - np.array([my_util, opp_util])))
-            if difference < best_difference and my_util > util_goals[0]:
+            if best_bid is None or (difference < best_difference and my_util > util_goals[0]):
                 best_difference, best_bid = difference, bid
 
         return best_bid
@@ -171,7 +196,7 @@ class PPOAgent:
     ############################### training method of agent ###############################
     ########################################################################################
     def train(
-        self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
+            self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
     ) -> None:
         log_dir_path = Path("logs")
         # create results directory if it does not exist
