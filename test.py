@@ -60,7 +60,7 @@ for _ in range(50):
     obs = env.reset(agent)
     done = False
     while not done:
-        action = agent.select_action(obs)
+        action = agent.select_action(obs, training=False)
         obs, reward, done, opp_reward = env.step(action)
         if done:
             rewards.append(reward)
