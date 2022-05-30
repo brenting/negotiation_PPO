@@ -50,7 +50,7 @@ opponents = (
 )
 
 # create environment and PPO agent
-env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
+env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, seed=42)
 agent = PPOAgent()
 
 # set checkpoint path for intermediate model checkpoints

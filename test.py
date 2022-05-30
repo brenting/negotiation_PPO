@@ -50,7 +50,7 @@ opponents = (
 )
 
 # create environment and PPO agent
-env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
+env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, seed=42)
 agent = PPOAgent.load("checkpoint.pkl")
 
 # test on 50 random negotiation sessions and gather average results
