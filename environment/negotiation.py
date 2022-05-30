@@ -36,9 +36,10 @@ class NegotiationEnv(gym.Env):
         domains: tuple[tuple[URI, URI]],
         opponents: tuple[DefaultParty],
         deadline_ms: int,
+        seed = 42,
+        verbose = False
     ):
         super().__init__()
-
         self.domains = domains
         self.opponents = opponents
         self.deadline_ms = deadline_ms
@@ -49,6 +50,9 @@ class NegotiationEnv(gym.Env):
         self.trace = {"actions": []}
         self.my_domain = None
         self.opp_domain = None
+
+        self.random = random.Random(seed)
+        self.verbose = verbose
 
     def step(self, action: Inform) -> tuple[Action, float, bool, float]:
         if self.progress.get(time.time() * 1000) == 1:
@@ -85,15 +89,19 @@ class NegotiationEnv(gym.Env):
         return observation, 0.0, False, 0.0  # observation, reward, done, info
 
     def reset(self, my_agent):
-        self.opponent: DefaultParty = random.choice(self.opponents)(VoidReporter())
-        domain = list(random.choice(self.domains))
-        random.shuffle(domain)
+        self.opponent: DefaultParty = self.random.choice(self.opponents)(VoidReporter())
+        domain = list(self.random.choice(self.domains))
+        self.random.shuffle(domain)
         self.trace = {"actions": []}
         self.current_domain = domain
         self.opp_utility_function = get_utility_function(domain[0])
         self.my_utility_function = get_utility_function(domain[1])
         self.my_domain = domain[1]
         self.opp_domain = domain[0]
+
+        if self.verbose:
+            print("Picking new opponent: " + str(type(self.opponent).__name__))
+
         self.progress = ProgressTime(self.deadline_ms, datetime.now())
 
         protocol = ProtocolRef(URI("SAOP"))
