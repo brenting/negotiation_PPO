@@ -7,9 +7,16 @@ from agent.concession_agent import ConcessionAgent
 from environment.domains import get_domains
 from environment.negotiation import NegotiationEnv
 # collect domains and opponents for testing (don't initialise the opponents)
-from environment.opponents.CSE3210 import Agent2, Agent7, Agent11, Agent3, Agent18, Agent19, Agent22, Agent24, Agent25,Agent26, Agent27
-from environment.opponents.CSE3210.agent14.agent14 import Agent14
-from environment.opponents.boulware_agent.boulware_agent import BoulwareAgent
+from environment.opponents import (
+    BoulwareAgent,
+    ConcederAgent,
+    HardlinerAgent,
+    LinearAgent,
+    RandomAgent,
+    StupidAgent,
+    CSE3210,
+)
+
 from utils.plot_trace import plot_nash_kalai_pareto, plot_trace, distance_to_nash
 
 
@@ -17,28 +24,44 @@ def test():
     global agent, rewards
     domains = get_domains("environment/domains/single")
     opponents = (
-        # Agent2,
-         #Agent7,
-         #Agent11,
-        #  Agent3,
-        #  Agent14,
-        #  Agent18,
-        # Agent19,
-         #Agent22,
-         #Agent24,
-         #Agent25,
-         Agent26,
-         #Agent27
-        #BoulwareAgent,
-        # HardlinerAgent,
         # ConcederAgent,
-        # LinearAgent
+        # HardlinerAgent,
+        # BoulwareAgent,
+        # LinearAgent,
+        # RandomAgent,
+        # StupidAgent,
+        CSE3210.Agent2,
+        # CSE3210.Agent3,
+        # CSE3210.Agent7,
+        # CSE3210.Agent11,
+        # CSE3210.Agent14,
+        CSE3210.Agent18,
+        # CSE3210.Agent19,
+        # CSE3210.Agent22,
+        # CSE3210.Agent24,
+        # CSE3210.Agent25,
+        CSE3210.Agent26,
+        # CSE3210.Agent27,
+        # CSE3210.Agent29,
+        # CSE3210.Agent32,
+        # CSE3210.Agent33,
+        CSE3210.Agent41,
+        #CSE3210.Agent43,
+        # CSE3210.Agent50,
+        CSE3210.Agent52,
+        # CSE3210.Agent55,
+        # CSE3210.Agent58,
+        # CSE3210.Agent61,
+        CSE3210.Agent64,
+        CSE3210.Agent67,
+        CSE3210.Agent68,
+        # CSE3210.Agent70,
+        CSE3210.Agent78,
 
     )
-    # TODO add more opponents
     # create environment and PPO agent
-    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
-    agent = ConcessionAgent.load("checkpoint.pkl", True)
+    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, verbose=True, seed=42)
+    agent = ConcessionAgent.load("checkpoint.pkl")
     # test on 50 random negotiation sessions and gather average results
     rewards = []
     opp_rewards = []
@@ -73,7 +96,7 @@ def test():
             agent.opp_concession = 0
 
         while not done:
-            action = agent.select_action(obs)
+            action = agent.select_action(obs, training=False)
             obs, reward, done, opp_reward = env.step(action)
             switch = False
             if done:
@@ -125,10 +148,10 @@ def test():
     #plt.plot(np.arange(len(rewards)), rewards)
     plt.savefig("rewards_plot")
     # print results
-    print(f"Average reward: {sum(rewards) / len(rewards)}")
+    print(f"Average reward: {sum(rewards) / len(rewards)} with variance {np.var(reward)}")
     print(f"Average opponent reward: {sum(opp_rewards) / len(opp_rewards)}")
     print(f"Average social welfare: {sum(welfare) / len(welfare)}")
-    print(f"Percentage of agreements: {agreements * 2}")  # (agreements / 50) * 100 = agreements * 2
+    print(f"Percentage of agreements: {agreements / len(rewards)}")
     print(f"Distance to Nash Point: {sum(nash_avg) / len(nash_avg)}")
 
 

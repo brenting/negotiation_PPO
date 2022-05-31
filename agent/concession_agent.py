@@ -129,7 +129,7 @@ class ConcessionAgent:
     #  1. My total concession, concesion param, progress?
     #  2. My total concession, the opp  concession / concession balance, concession param, progress?
     #  Output -> Concession param, utility goal
-    def select_action(self, obs: Offer) -> Action:
+    def select_action(self, obs: Offer, training=True) -> Action:
         """Method to return an action when it is our turn.
 
         Args:
@@ -160,14 +160,13 @@ class ConcessionAgent:
         state = [self.opp_concession, self.balance, progress]
         assert len(state) == PPO_PARAMETERS["state_dim"]
         # obtain action vector from PPo based on the state
-        out = self.ppo.select_action(state)
+        out = self.ppo.select_action(state, training)
         assert len(out) == PPO_PARAMETERS["action_dim"]
 
         self.opp_concession = out[1]
 
         # find a good bid based on the utility goals
-        # TODO sigmoid or no sigmoid?
-        self.target =  np.exp(4 * out[0]) / (1 + np.exp(4 * out[0]))
+        self.target =  np.exp(2 * out[0]) / (1 + np.exp(2 * out[0]))
         #print(self.target)
         bid = self.findBid()
         action = Offer(self.me, bid)
@@ -234,9 +233,9 @@ class ConcessionAgent:
         self.ppo.save(checkpoint_path)
 
     @classmethod
-    def load(cls, checkpoint_path, testing_flag=False):
+    def load(cls, checkpoint_path):
         ppo = PPO(**PPO_PARAMETERS)
-        ppo.load(checkpoint_path, testing_flag)
+        ppo.load(checkpoint_path)
         return cls(ppo)
 
     ########################################################################################
