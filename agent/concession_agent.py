@@ -29,7 +29,7 @@ from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################
 PPO_PARAMETERS = {
-    "state_dim": 4,  # dimension of state space
+    "state_dim": 3,  # dimension of state space
     "action_dim": 2,  # dimension of action space
     "lr_actor": 0.0003,  # learning rate for actor network
     "lr_critic": 0.001,  # learning rate for critic network
@@ -52,7 +52,7 @@ UPDATE_EPISODE_FREQ = 10  # update policy every n episodes
 #####################################################
 
 
-class AcceptanceAgent:
+class ConcessionAgent:
     def __init__(self, ppo: PPO = None):
         # create new PPO if none is provided
         if ppo is None:
@@ -67,8 +67,7 @@ class AcceptanceAgent:
         self.progress: ProgressTime = None
         self.me: PartyId = None
         self.settings: Settings = None
-
-        self.opp_concession = None
+        self.opp_concession = 0
         self.received_utils = np.array([])
         self.reservation_bid_utility = 0
         self.bids_utility_map = {}
@@ -89,13 +88,10 @@ class AcceptanceAgent:
         # a Settings message is the first message that will be send to your
         # agent containing all the information about the negotiation session.
         if isinstance(data, Settings):
-            self.received_utils = np.array([])
-            self.reservation_bid_utility = 0
-            self.bids_utility_map = {}
-            self.max_possible_utility = 0
-            self.acceptability_index = 0
-            self.last_received_utils = [0.0, 0.0, 0.0]
+            self.last_received_opp_utils = [0.0, 0.0]
+            self.previously_sent_utils = [0.0, 0.0]
             self.target = 1
+            self.balance = 1
             self.settings = cast(Settings, data)
             self.me = self.settings.getID()
 
@@ -111,30 +107,28 @@ class AcceptanceAgent:
 
             self.opponent_model = OpponentModel(self.domain)
 
-            if self.profile.getReservationBid() is not None:
-                self.reservation_bid_utility = self.profile.getUtility(
-                    self.profile.getReservationBid())
-
-            # Get list of all possible bids from domain
             self.all_bids = AllBidsList(self.profile.getDomain())
 
-            # Filter all bids list & remove all bids with lower utility than reservation bid
-            self.all_bids = filter(lambda x: self.profile.getUtility(x) >= self.reservation_bid_utility,
-                                   self.all_bids)
+            #################
+
+            self._acceptable_utility = 1.0
+            self._best_received_bid = None
+            self._map_opponent = []
+            self._acceptability_index = 0
+            self._reservation_bid_utility = 0
+            self._max_possible_utility = 1
 
             # Sort list of all bids descending by utility
-            self.all_bids = sorted(self.all_bids, key=lambda x: self.profile.getUtility(x),
-                                   reverse=True)
+            self.all_bids = sorted(self.all_bids, key=lambda x: self.get_utility(x),
+                                   reverse=False)
 
             # Get maximum possible utility
-            self.max_possible_utility = float(self.profile.getUtility(self.all_bids[0]))
+            self._max_possible_utility = float(self.get_utility(self.all_bids[0]))
 
-            # Create a map bid-utility
-            for bid in self.all_bids:
-                self.bids_utility_map[bid] = self.profile.getUtility(bid)
-            self.bids_utility_map = dict(
-                sorted(self.bids_utility_map.items(), key=operator.itemgetter(1), reverse=True))
-
+    # TODO - Input approaches ->
+    #  1. My total concession, concesion param, progress?
+    #  2. My total concession, the opp  concession / concession balance, concession param, progress?
+    #  Output -> Concession param, utility goal
     def select_action(self, obs: Offer) -> Action:
         """Method to return an action when it is our turn.
 
@@ -152,90 +146,97 @@ class AcceptanceAgent:
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid() if obs is not None else None
         self.opponent_model.update(received_bid)
-        opp_utility = self.opponent_model.get_predicted_utility(received_bid)
-        # self.opponent_model.update(received_bid)
-        self.received_utils = np.append(self.received_utils, [self.get_utility(received_bid)])
-
-        # find a good bid based on the utility goals
-        target = self.get_target_utility()
-        self.target = self.target if target is None else target
-        bid = self.find_bid()
-        action = Offer(self.me, bid)
 
         # build state vector for PPO
-        received_util = float(self.get_utility(received_bid))
-        self.last_received_utils.append(received_util)
-        self.last_received_utils.pop(0)
+        opp_util = float(self.opponent_model.get_predicted_utility(received_bid))
+        self.last_received_opp_utils.append(opp_util)
+        self.last_received_opp_utils.pop(0)
         progress = self.progress.get(time.time() * 1000)
-        utility_of_next_bid = 0 if bid is None else self.get_utility(bid)
-        state = self.last_received_utils + [progress]
-        assert len(state) == PPO_PARAMETERS["state_dim"]
 
+        my_concession = self.previously_sent_utils[0] - self.previously_sent_utils[1]
+        opp_concession = self.last_received_opp_utils[0] - self.last_received_opp_utils[1]
+        self.balance += my_concession - opp_concession
+        # print(opp_concession)
+        state = [self.opp_concession, self.balance, progress]
+        assert len(state) == PPO_PARAMETERS["state_dim"]
         # obtain action vector from PPo based on the state
-        accept = self.ppo.select_action(state)
-        assert len(accept) == PPO_PARAMETERS["action_dim"]
+        out = self.ppo.select_action(state)
+        assert len(out) == PPO_PARAMETERS["action_dim"]
+
+        self.opp_concession = out[1]
+
+        # find a good bid based on the utility goals
+        # TODO sigmoid or no sigmoid?
+        self.target =  np.exp(4 * out[0]) / (1 + np.exp(4 * out[0]))
+        #print(self.target)
+        bid = self.findBid()
+        action = Offer(self.me, bid)
 
         # return Accept if the received offer is better than our goal
-        if accept[0] > accept[1]:
-            # print("accepted", target, utility_of_next_bid, received_util,)
+        if self.get_utility(received_bid) > self.target:
+            # print("accepted", self.target)
             return Accept(self.me, received_bid)
 
         return action
 
+    # TODO change le bidding
+    # maybe a binary search?
     def find_bid(self) -> Bid:
-        while self.bids_utility_map[
-            self.all_bids[self.acceptability_index]] > self.target and self.acceptability_index < len(
-                self.all_bids) - 1:
-            self.acceptability_index = self.acceptability_index + 1
 
-        acceptable = self.all_bids[0:self.acceptability_index]
+        # TODO: Implement NSGA-II version?
+        # compose a list of all possible bids
+        best_difference = 99999.0
+        best_bid = Bid({})
 
-        if len(acceptable) == 0:
-            acceptable.append(list(self.bids_utility_map.keys())[0])
+        # take 1000 random attempts to find a bid close to both utility goals
+        for _ in range(5000):
+            bid = self.all_bids[random.randint(0, len(self.all_bids) - 1)]
+            my_util = self.get_utility(bid)
+            # opp_util = self.opponent_model.get_predicted_utility(bid)
+            difference = self.target - my_util
+            if my_util > self.target:  # and difference < best_difference:
+                best_difference, best_bid = difference, bid
+                best_bid = bid
 
-        random.shuffle(acceptable)
-        bid = acceptable[0]
-        # print(self.target, self.get_utility(bid))
+        self.previously_sent_utils.append(self.get_utility(best_bid))
+        self.previously_sent_utils.pop(0)
+
+        return best_bid
+
+    def findBid(self) -> Bid:
+        min_idx = self.binary_search(self.all_bids, self.target)
+        bid = np.random.choice(self.all_bids[min_idx:])
+        #print(self.get_utility(bid), self.target, min_idx)
         return bid
+
+    def binary_search(self, data, val):
+        lo, hi = 0, len(data) - 1
+        best_ind = lo
+        while lo <= hi:
+            mid = lo + (hi - lo) // 2
+            if self.get_utility(data[mid]) < val:
+                lo = mid + 1
+            elif self.get_utility(data[mid]) > val:
+                hi = mid - 1
+            else:
+                best_ind = mid
+                break
+            # check if data[mid] is closer to val than data[best_ind]
+            if abs(self.get_utility(data[mid]) - val) < abs(self.get_utility(data[best_ind]) - val):
+                best_ind = mid
+        return best_ind
 
     def get_utility(self, bid: Bid) -> float:
         """returns utility value of bid for our agent"""
         return float(self.profile.getUtility(bid))
 
-    def get_target_utility(self):
-        return self.get_ratio() * self.get_initial_target_utility() + (1 - self.get_ratio())
-
-    def get_initial_target_utility(self):
-        progress = self.progress.get(time.time() * 1000)
-        t = 1 - (1 - self.emax()) * (progress ** 7)
-        return t
-
-    def get_ratio(self):
-        return np.min([(self.compute_width() + self.g()) / (1 - self.get_initial_target_utility()), 2])
-
-    def g(self):
-        return 0.5
-
-    def emax(self):
-        avg = self.compute_average()
-        return avg * (1 - avg) * self.compute_width()
-
-    def compute_average(self):
-        return np.mean(self.received_utils)
-
-    def compute_width(self):
-        avg = self.compute_average()
-        variance = np.abs(np.mean(self.received_utils ** 2 - avg ** 2))
-        # print("variance:",variance)
-        return np.sqrt(12 * variance)
-
     def save(self, checkpoint_path):
         self.ppo.save(checkpoint_path)
 
     @classmethod
-    def load(cls, checkpoint_path):
+    def load(cls, checkpoint_path, testing_flag=False):
         ppo = PPO(**PPO_PARAMETERS)
-        ppo.load(checkpoint_path)
+        ppo.load(checkpoint_path, testing_flag)
         return cls(ppo)
 
     ########################################################################################
@@ -271,6 +272,13 @@ class AcceptanceAgent:
             episode_reward = 0
             done = False
 
+            try:
+                f = open("learned_values/" + env.opponent.__class__.__name__ + ".txt", "r")
+                self.opp_concession = float(f.read())
+                f.close()
+            except FileNotFoundError:
+                self.opp_concession = 0
+
             while not done:
                 # select action with policy
                 action = self.select_action(obs)
@@ -285,7 +293,15 @@ class AcceptanceAgent:
             log_running_reward.append(episode_reward)
             self.rewards.append(episode_reward)
             episode_count += 1
-            #print(episode_count,self.rewards )
+
+            # write e value to file
+            f = open("learned_values/" + env.opponent.__class__.__name__ + ".txt", "w")
+            try:
+                e = self.opp_concession
+            except AttributeError:
+                e = 0.5
+            f.write(str(e))
+            f.close()
 
             # update PPO agent every n sessions
             if episode_count % UPDATE_EPISODE_FREQ == 0:

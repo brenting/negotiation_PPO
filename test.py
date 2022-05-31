@@ -1,58 +1,44 @@
 import json
 
-from environment.negotiation import NegotiationEnv
-from environment.domains import get_domains
-from agent.acceptance_agent import AcceptanceAgent
-from environment.opponents import (
-    BoulwareAgent,
-    ConcederAgent,
-    HardlinerAgent,
-    LinearAgent,
-    RandomAgent,
-    StupidAgent,
-)
-from environment.opponents.CSE3210 import (
-    Agent2,
-    Agent7,
-    Agent9,
-    Agent11,
-    Agent3,
-    Agent14,
-    Agent18,
-    Agent19,
-    Agent22,
-    Agent24,
-    Agent25,
-    Agent26,
-    Agent27
-)
+import matplotlib.pyplot as plt
+import numpy as np
 
+from agent.concession_agent import ConcessionAgent
+from environment.domains import get_domains
+from environment.negotiation import NegotiationEnv
 # collect domains and opponents for testing (don't initialise the opponents)
+from environment.opponents.CSE3210 import Agent2, Agent7, Agent11, Agent3, Agent18, Agent19, Agent22, Agent24, Agent25,Agent26, Agent27
+from environment.opponents.CSE3210.agent14.agent14 import Agent14
+from environment.opponents.boulware_agent.boulware_agent import BoulwareAgent
 from utils.plot_trace import plot_nash_kalai_pareto, plot_trace, distance_to_nash
 
 
 def test():
     global agent, rewards
-    domains = get_domains("environment/domains/test")
+    domains = get_domains("environment/domains/single")
     opponents = (
-        #Agent2,
-        Agent7,
-        Agent11,
-        Agent3,
-        Agent14,
-        Agent18,
-        Agent19,
-        Agent22,
-        Agent24,
-        Agent25,
-        Agent26,
-        Agent27
+        # Agent2,
+         #Agent7,
+         #Agent11,
+        #  Agent3,
+        #  Agent14,
+        #  Agent18,
+        # Agent19,
+         #Agent22,
+         #Agent24,
+         #Agent25,
+         Agent26,
+         #Agent27
+        #BoulwareAgent,
+        # HardlinerAgent,
+        # ConcederAgent,
+        # LinearAgent
 
     )
     # TODO add more opponents
     # create environment and PPO agent
     env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
-    agent = AcceptanceAgent.load("checkpoint.pkl")
+    agent = ConcessionAgent.load("checkpoint.pkl", True)
     # test on 50 random negotiation sessions and gather average results
     rewards = []
     opp_rewards = []
@@ -61,7 +47,7 @@ def test():
     my_prof = None
     switch = False
     nash_avg = []
-    for _ in range(1):
+    for _ in range(50):
         obs = env.reset(agent)
         my_prof = str(env.my_domain)[-13:]
         done = False
@@ -79,11 +65,19 @@ def test():
         for bid in pareto_front:
             pareto_utilities.append(bid.get('utility'))
 
+        try:
+            f = open("learned_values/" + env.opponent.__class__.__name__ + ".txt", "r")
+            agent.opp_concession = float(f.read())
+            f.close()
+        except FileNotFoundError:
+            agent.opp_concession = 0
+
         while not done:
             action = agent.select_action(obs)
             obs, reward, done, opp_reward = env.step(action)
             switch = False
             if done:
+                # print(agent.opp_concession)
                 if my_prof == "profileB.json":
                     switch = True
 
@@ -104,9 +98,32 @@ def test():
                 else:
                     opp_rewards.append(opp_reward)
                     welfare.append(reward + opp_reward)
+
+                # write e value to file
+                f = open("learned_values/" + env.opponent.__class__.__name__ + ".txt", "w")
+                try:
+                    e = agent.opp_concession
+                except AttributeError:
+                    e = 0.0
+                f.write(str(e))
+                f.close()
+
                 break
     plot_nash_kalai_pareto(env.trace, nash_point, kalai_point, pareto_utilities, "results/evaluation_plot.html", switch)
     plot_trace(env.trace, "results/trace_plot.html")
+
+    x, y = np.arange(len(rewards)), rewards
+    # create scatterplot
+    plt.scatter(x, y)
+
+    # calculate equation for trendline
+    z = np.polyfit(x, y, 1)
+    p = np.poly1d(z)
+
+    # add trendline to plot
+    plt.plot(x, p(x))
+    #plt.plot(np.arange(len(rewards)), rewards)
+    plt.savefig("rewards_plot")
     # print results
     print(f"Average reward: {sum(rewards) / len(rewards)}")
     print(f"Average opponent reward: {sum(opp_rewards) / len(opp_rewards)}")
