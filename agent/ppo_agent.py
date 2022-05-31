@@ -105,7 +105,7 @@ class PPOAgent:
             self.opponent_model = OpponentModel(self.domain)
             self.last_received_utils = [0.0, 0.0, 0.0]
 
-    def select_action(self, obs: Offer) -> Action:
+    def select_action(self, obs: Offer, training=True) -> Action:
         """Method to return an action when it is our turn.
 
         Args:
@@ -132,7 +132,7 @@ class PPOAgent:
         assert len(state) == PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
-        util_goals = self.ppo.select_action(state)
+        util_goals = self.ppo.select_action(state, training)
         assert len(util_goals) == PPO_PARAMETERS["action_dim"]
 
         # return Accept if the reveived offer is better than our goal
@@ -142,6 +142,9 @@ class PPOAgent:
 
         # find a good bid based on the utility goals
         bid = self.find_bid(util_goals)
+
+        assert bid, "bid cannot be None"
+
         action = Offer(self.me, bid)
         # if action.getBid() is None:
         #     print("Agent 1 offering: " + str(action))
@@ -161,7 +164,7 @@ class PPOAgent:
             my_util = self.get_utility(bid)
             opp_util = self.opponent_model.get_predicted_utility(bid)
             difference = np.sum(np.square(util_goals - np.array([my_util, opp_util])))
-            if difference < best_difference and my_util > util_goals[0]:
+            if difference < best_difference:
                 best_difference, best_bid = difference, bid
 
         return best_bid

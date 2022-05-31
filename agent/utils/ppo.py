@@ -63,12 +63,12 @@ class ActorCritic(nn.Module):
     def forward(self):
         raise NotImplementedError
     
-    def act(self, state):
+    def predict(self, state, training=True):
         action_mean = self.actor(state)
         cov_mat = torch.diag(self.action_var).unsqueeze(dim=0)
         dist = MultivariateNormal(action_mean, cov_mat)
 
-        action = dist.sample()
+        action = dist.sample() if training else action_mean
         action_logprob = dist.log_prob(action)
         
         return action.detach(), action_logprob.detach()
@@ -132,11 +132,11 @@ class PPO:
 
         print("―" * 100)
 
-    def select_action(self, state):
+    def select_action(self, state, training=True):
 
         with torch.no_grad():
             state = torch.FloatTensor(state).to(DEVICE)
-            action, action_logprob = self.policy_old.act(state)
+            action, action_logprob = self.policy_old.predict(state, training)
 
         self.buffer.states.append(state)
         self.buffer.actions.append(action)

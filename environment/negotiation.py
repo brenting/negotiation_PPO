@@ -33,13 +33,14 @@ class NegotiationEnv(gym.Env):
     metadata = {"render.modes": ["human"]}
 
     def __init__(
-            self,
-            domains: tuple[tuple[URI, URI]],
-            opponents: tuple[DefaultParty],
-            deadline_ms: int,
+        self,
+        domains: tuple[tuple[URI, URI]],
+        opponents: tuple[DefaultParty],
+        deadline_ms: int,
+        seed = 42,
+        verbose = False
     ):
         super().__init__()
-
         self.domains = domains
         self.opponents = opponents
         self.deadline_ms = deadline_ms
@@ -52,9 +53,11 @@ class NegotiationEnv(gym.Env):
         self.my_domain = None
         self.opp_domain = None
 
-    def step(self, action: Inform) -> tuple[Action, float, bool, float]:
+        self.random = random.Random(seed)
+        self.verbose = verbose
+
+    def step(self, action: Inform) -> tuple[Action, float, bool, None]:
         if self.progress.get(time.time() * 1000) == 1:
-            self.opponent.notifyChange(EndNegotiation)
             return None, 0.0, True, 0.0  # observation, reward, done, info
 
         self.opponent.notifyChange(ActionDone(action))
@@ -72,13 +75,11 @@ class NegotiationEnv(gym.Env):
         observation: Action = self.opponent.notifyChange(YourTurn())
 
         if self.progress.get(time.time() * 1000) == 1:
-            self.opponent.notifyChange(Finished)
             return None, 0.0, True, 0.0  # observation, reward, done, info
 
         self.append_trace(action, observation)
 
         if isinstance(observation, Accept):
-
             bid = observation.getBid()
             agreements = Agreements({self.opponent_ID: bid, self.my_ID: bid})
             self.opponent.notifyChange(Finished(agreements))
@@ -89,15 +90,18 @@ class NegotiationEnv(gym.Env):
         return observation, 0.0, False, 0.0  # observation, reward, done, info
 
     def reset(self, my_agent):
-        self.opponent: DefaultParty = random.choice(self.opponents)(VoidReporter())
-        domain = list(random.choice(self.domains))
-        random.shuffle(domain)
+        self.opponent: DefaultParty = self.random.choice(self.opponents)(VoidReporter())
+        domain = list(self.random.choice(self.domains))
+        self.random.shuffle(domain)
         self.trace = {"actions": []}
         self.current_domain = domain
         self.opp_utility_function = get_utility_function(domain[0])
         self.my_domain = domain[1]
         self.opp_domain = domain[0]
         self.my_utility_function = get_utility_function(domain[1])
+
+        if self.verbose:
+            print("Picking new opponent: " + str(type(self.opponent).__name__))
 
         self.progress = ProgressTime(self.deadline_ms, datetime.now())
 
@@ -125,14 +129,6 @@ class NegotiationEnv(gym.Env):
         my_agent.notifyChange(my_settings)
 
         observation = self.opponent.notifyChange(YourTurn())
-
-        # write e value to file
-        # f = open("evalue.txt", "w")
-        # try:
-        #     e = self.opponent.getE()
-        # except AttributeError:
-        #     e = 0.5
-        # f.write(str(e))
 
         return observation  # reward, done, info can't be included
 
@@ -172,5 +168,5 @@ class NegotiationEnv(gym.Env):
 
 
 class VoidReporter(Reporter):
-    def log(self, level: int, msg: str, exc: Optional[BaseException] = None):
-        pass
+	def log(self, level:int , msg:str, exc:Optional[BaseException]=None):
+		pass
