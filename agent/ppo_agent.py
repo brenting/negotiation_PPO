@@ -130,6 +130,9 @@ class PPOAgent:
 
         # find a good bid based on the utility goals
         bid = self.find_bid(util_goals)
+
+        assert bid, "bid cannot be None"
+
         action = Offer(self.me, bid)
 
         return action
