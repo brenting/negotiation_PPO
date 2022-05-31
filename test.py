@@ -146,9 +146,9 @@ def test():
     # add trendline to plot
     plt.plot(x, p(x))
     #plt.plot(np.arange(len(rewards)), rewards)
-    plt.savefig("rewards_plot")
+    plt.savefig("results/rewards_plot")
     # print results
-    print(f"Average reward: {sum(rewards) / len(rewards)} with variance {np.var(reward)}")
+    print(f"Average reward: {sum(rewards) / len(rewards)} with variance {np.var(rewards)}")
     print(f"Average opponent reward: {sum(opp_rewards) / len(opp_rewards)}")
     print(f"Average social welfare: {sum(welfare) / len(welfare)}")
     print(f"Percentage of agreements: {agreements / len(rewards)}")
@@ -156,7 +156,3 @@ def test():
 
 
 test()
-# TODO distance to pareto frontier
-# TODO Add more plots - example average utility against  1 agent (maybe  for specific domains)
-
-# TODO weaker domains : 17, 10, 14, 3

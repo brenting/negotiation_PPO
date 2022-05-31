@@ -125,10 +125,6 @@ class ConcessionAgent:
             # Get maximum possible utility
             self._max_possible_utility = float(self.get_utility(self.all_bids[0]))
 
-    # TODO - Input approaches ->
-    #  1. My total concession, concesion param, progress?
-    #  2. My total concession, the opp  concession / concession balance, concession param, progress?
-    #  Output -> Concession param, utility goal
     def select_action(self, obs: Offer, training=True) -> Action:
         """Method to return an action when it is our turn.
 
@@ -177,30 +173,6 @@ class ConcessionAgent:
             return Accept(self.me, received_bid)
 
         return action
-
-    # TODO change le bidding
-    # maybe a binary search?
-    def find_bid(self) -> Bid:
-
-        # TODO: Implement NSGA-II version?
-        # compose a list of all possible bids
-        best_difference = 99999.0
-        best_bid = Bid({})
-
-        # take 1000 random attempts to find a bid close to both utility goals
-        for _ in range(5000):
-            bid = self.all_bids[random.randint(0, len(self.all_bids) - 1)]
-            my_util = self.get_utility(bid)
-            # opp_util = self.opponent_model.get_predicted_utility(bid)
-            difference = self.target - my_util
-            if my_util > self.target:  # and difference < best_difference:
-                best_difference, best_bid = difference, bid
-                best_bid = bid
-
-        self.previously_sent_utils.append(self.get_utility(best_bid))
-        self.previously_sent_utils.pop(0)
-
-        return best_bid
 
     def findBid(self) -> Bid:
         min_idx = self.binary_search(self.all_bids, self.target)

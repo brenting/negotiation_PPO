@@ -213,7 +213,6 @@ def plot_trace(results_trace: dict, plot_file: str):
     fig.update_yaxes(title_text="utility", range=[0, 1], ticks="outside")
     fig.write_html(f"{os.path.splitext(plot_file)[0]}.html")
 
-#TODO investigate
 def plot_training(rewards: list, plot_file: str):
     fig = go.Figure()
     fig = px.scatter(x=np.arange(len(rewards)), y=rewards, trendline="ols")
