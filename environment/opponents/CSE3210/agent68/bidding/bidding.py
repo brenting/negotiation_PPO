@@ -206,7 +206,9 @@ class Bidding():
                 return outBid
 
             # filter based on the frequencies found above
-            filtered = list(filter(lambda bid: bid._issuevalues[max_issue] == max_value, options))
+            filtered = []
+            if max_issue is not None:
+                filtered = list(filter(lambda bid: bid._issuevalues[max_issue] == max_value, options))
             top = []
             if len(filtered) == 0 or self._progress.get(round(clock() * 1000)) < 0.25:
                 util_predictor = lambda bid: opponent.getUtility(bid)

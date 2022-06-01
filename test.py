@@ -22,41 +22,24 @@ from utils.plot_trace import plot_nash_kalai_pareto, plot_trace, distance_to_nas
 
 def test():
     global agent, rewards
-    domains = get_domains("environment/domains/single")
+    domains = get_domains("environment/domains/test")
     opponents = (
-        # ConcederAgent,
-        # HardlinerAgent,
-        # BoulwareAgent,
-        # LinearAgent,
-        # RandomAgent,
-        # StupidAgent,
-        CSE3210.Agent2,
-        # CSE3210.Agent3,
-        # CSE3210.Agent7,
-        # CSE3210.Agent11,
-        # CSE3210.Agent14,
-        CSE3210.Agent18,
-        # CSE3210.Agent19,
-        # CSE3210.Agent22,
-        # CSE3210.Agent24,
-        # CSE3210.Agent25,
-        CSE3210.Agent26,
-        # CSE3210.Agent27,
-        # CSE3210.Agent29,
-        # CSE3210.Agent32,
-        # CSE3210.Agent33,
-        CSE3210.Agent41,
-        #CSE3210.Agent43,
-        # CSE3210.Agent50,
-        CSE3210.Agent52,
-        # CSE3210.Agent55,
-        # CSE3210.Agent58,
-        # CSE3210.Agent61,
-        CSE3210.Agent64,
-        CSE3210.Agent67,
-        CSE3210.Agent68,
-        # CSE3210.Agent70,
-        CSE3210.Agent78,
+
+         CSE3210.Agent2,
+        #
+        #CSE3210.Agent18,
+        #
+        # CSE3210.Agent26,
+        #
+        #CSE3210.Agent41,
+        #
+         #CSE3210.Agent52,
+        #
+       #  CSE3210.Agent64,
+         #CSE3210.Agent67,
+         #CSE3210.Agent68,
+
+        #CSE3210.Agent78,
 
     )
     # create environment and PPO agent
@@ -70,6 +53,7 @@ def test():
     my_prof = None
     switch = False
     nash_avg = []
+    concesh = []
     for _ in range(50):
         obs = env.reset(agent)
         my_prof = str(env.my_domain)[-13:]
@@ -87,7 +71,7 @@ def test():
         pareto_utilities = []
         for bid in pareto_front:
             pareto_utilities.append(bid.get('utility'))
-
+        concesh.append(agent.opp_concession)
         try:
             f = open("learned_values/" + env.opponent.__class__.__name__ + ".txt", "r")
             agent.opp_concession = float(f.read())
@@ -135,24 +119,28 @@ def test():
     plot_nash_kalai_pareto(env.trace, nash_point, kalai_point, pareto_utilities, "results/evaluation_plot.html", switch)
     plot_trace(env.trace, "results/trace_plot.html")
 
-    x, y = np.arange(len(rewards)), rewards
-    # create scatterplot
-    plt.scatter(x, y)
-
-    # calculate equation for trendline
-    z = np.polyfit(x, y, 1)
-    p = np.poly1d(z)
-
-    # add trendline to plot
-    plt.plot(x, p(x))
-    #plt.plot(np.arange(len(rewards)), rewards)
-    plt.savefig("results/rewards_plot")
+    plot_trendline(rewards, "rewards_plot")
+    plot_trendline(concesh, "concesh_plot")
     # print results
     print(f"Average reward: {sum(rewards) / len(rewards)} with variance {np.var(rewards)}")
     print(f"Average opponent reward: {sum(opp_rewards) / len(opp_rewards)}")
     print(f"Average social welfare: {sum(welfare) / len(welfare)}")
     print(f"Percentage of agreements: {agreements / len(rewards)}")
     print(f"Distance to Nash Point: {sum(nash_avg) / len(nash_avg)}")
+
+
+def plot_trendline(data, filename):
+    x, y = np.arange(len(data)), data
+    # create scatterplot
+    plt.scatter(x, y)
+    # calculate equation for trendline
+    z = np.polyfit(x, y, 1)
+    p = np.poly1d(z)
+    # add trendline to plot
+    plt.plot(x, p(x))
+    # plt.plot(np.arange(len(rewards)), rewards)
+    plt.savefig("results/" + filename)
+    plt.close()
 
 
 test()

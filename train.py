@@ -59,6 +59,6 @@ agent = ConcessionAgent()
 checkpoint_path = "checkpoint.pkl"
 
 # train and save agent
-agent.train(env=env, time_budget_sec=25000, checkpoint_path=checkpoint_path)
+agent.train(env=env, time_budget_sec=3600, checkpoint_path=checkpoint_path)
 agent.save(checkpoint_path)
 plot_training(agent.rewards, "results/training_plot.html")

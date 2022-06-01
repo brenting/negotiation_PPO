@@ -145,15 +145,15 @@ class ConcessionAgent:
 
         # build state vector for PPO
         opp_util = float(self.opponent_model.get_predicted_utility(received_bid))
-        self.last_received_opp_utils.append(opp_util)
-        self.last_received_opp_utils.pop(0)
+
         progress = self.progress.get(time.time() * 1000)
 
         my_concession = self.previously_sent_utils[0] - self.previously_sent_utils[1]
         opp_concession = self.last_received_opp_utils[0] - self.last_received_opp_utils[1]
         self.balance += my_concession - opp_concession
-        # print(opp_concession)
+        #print(opp_concession)
         state = [self.opp_concession, self.balance, progress]
+        #print(state)
         assert len(state) == PPO_PARAMETERS["state_dim"]
         # obtain action vector from PPo based on the state
         out = self.ppo.select_action(state, training)
@@ -166,6 +166,12 @@ class ConcessionAgent:
         #print(self.target)
         bid = self.findBid()
         action = Offer(self.me, bid)
+
+        self.last_received_opp_utils.append(opp_util)
+        self.last_received_opp_utils.pop(0)
+
+        self.previously_sent_utils.append(self.get_utility(bid))
+        self.previously_sent_utils.pop(0)
 
         # return Accept if the received offer is better than our goal
         if self.get_utility(received_bid) > self.target:
