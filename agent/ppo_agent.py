@@ -282,6 +282,10 @@ class PPOAgent:
                 test_thread = TestThread("TestThread" + str(episode_count), agent)
                 test_thread.start()
 
+                if episode_count == 2500:
+                    test_thread.join()
+                    break
+
         log_f.close()
         env.close()
 
