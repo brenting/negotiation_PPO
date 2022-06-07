@@ -1,4 +1,5 @@
 import time
+import threading
 from pathlib import Path
 from random import randint
 from typing import cast
@@ -25,6 +26,7 @@ from geniusweb.references.Parameters import Parameters
 from geniusweb.simplerunner.NegoRunner import StdOutReporter
 
 from agent.utils.opponent_model import OpponentModel
+from evaluate import evaluate
 
 from .utils.ppo import PPO
 
@@ -35,7 +37,7 @@ PPO_PARAMETERS = {
     "lr_actor": 0.0003,  # learning rate for actor network
     "lr_critic": 0.001,  # learning rate for critic network
     "gamma": 1,  # discount factor
-    "K_epochs": 10,  # update policy for K epochs in one PPO update
+    "K_epochs": 3,  # update policy for K epochs in one PPO update
     "eps_clip": 0.2,  # clip parameter for PPO
     "action_std": 0.6,  # starting std for action distribution (Multivariate Normal)
     "action_std_decay_rate": 0.05,  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
@@ -46,8 +48,11 @@ PPO_PARAMETERS = {
 ################## other parameters #################
 LOG_FREQ = 100  # log avg reward in the interval (in num episode)
 SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
-ACTION_STD_DECAY_FREQ = 250  # action_std decay frequency (in num episode)
-UPDATE_EPISODE_FREQ = 10  # update policy every n episodes
+ACTION_STD_DECAY_FREQ = 200  # action_std decay frequency (in num episode)
+UPDATE_EPISODE_FREQ = 100  # update policy every n episodes
+TEST_FREQ = 100
+
+
 #####################################################
 
 
@@ -57,7 +62,7 @@ class PPOAgent:
         if ppo is None:
             self.ppo = PPO(**PPO_PARAMETERS)
         elif isinstance(ppo, PPO):
-            self.ppo: PPO = ppo
+            self.ppo = ppo
         else:
             raise ValueError(f"ppo argument is of wrong type: {type(ppo)}")
 
@@ -98,6 +103,7 @@ class PPOAgent:
             profile_connection.close()
 
             self.opponent_model = OpponentModel(self.domain)
+            self.last_received_utils = [0.0, 0.0, 0.0]
 
     def select_action(self, obs: Offer, training=True) -> Action:
         """Method to return an action when it is our turn.
@@ -109,11 +115,16 @@ class PPOAgent:
             Action: Our action as a response on the Offer.
         """
         # extract bid from offer and use it to update opponent utility estimation
-        received_bid = obs.getBid()
-        self.opponent_model.update(received_bid)
-
+        # print("Agent 1 received offer: " + str(obs))
+        # print("Opp model: " + str(self.opponent_model.offers))
+        if obs is None or obs.getBid() is None:
+            received_bid = None
+            received_util = 0.0
+        else:
+            received_bid = obs.getBid()
+            self.opponent_model.update(received_bid)
+            received_util = float(self.get_utility(received_bid))
         # build state vector for PPO
-        received_util = float(self.get_utility(received_bid))
         self.last_received_utils.append(received_util)
         self.last_received_utils.pop(0)
         progress = self.progress.get(time.time() * 1000)
@@ -174,7 +185,7 @@ class PPOAgent:
     ############################### training method of agent ###############################
     ########################################################################################
     def train(
-        self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
+            self, env: NegotiationEnv, time_budget_sec: int, checkpoint_path: str
     ) -> None:
         log_dir_path = Path("logs")
         # create results directory if it does not exist
@@ -194,6 +205,7 @@ class PPOAgent:
 
         # logging variables
         log_running_reward = []
+        log_running_opp_reward = []
 
         # training loop
         episode_count = 0
@@ -202,6 +214,7 @@ class PPOAgent:
 
             obs = env.reset(self)
             episode_reward = 0
+            episode_opp_reward = 0
             done = False
 
             while not done:
@@ -209,15 +222,17 @@ class PPOAgent:
                 action = self.select_action(obs)
 
                 # execute action
-                obs, reward, done, _ = env.step(action)
+                obs, reward, done, opp_reward = env.step(action)
 
                 # saving reward and is_terminals
                 self.ppo.buffer.rewards.append(reward)
                 self.ppo.buffer.is_terminals.append(done)
 
                 episode_reward += reward
+                episode_opp_reward += opp_reward
 
             log_running_reward.append(episode_reward)
+            log_running_opp_reward.append(episode_opp_reward)
             episode_count += 1
 
             # update PPO agent every n sessions
@@ -232,9 +247,13 @@ class PPOAgent:
             if episode_count % LOG_FREQ == 0:
                 # log average reward since last log
                 log_avg_reward = sum(log_running_reward) / len(log_running_reward)
-                log_f.write(f"{episode_count},{log_avg_reward:.4f}\n")
+                log_avg_opp_reward = sum(log_running_opp_reward) / len(log_running_opp_reward)
+                print(log_avg_reward)
+                print(log_avg_opp_reward)
+                log_f.write(f"{episode_count},{log_avg_reward:.4f},{log_avg_opp_reward:.4f}\n")
                 log_f.flush()
                 log_running_reward = []
+                log_running_opp_reward = []
 
             # save model weights
             if episode_count % SAVE_MODEL_FREQ == 0:
@@ -243,6 +262,14 @@ class PPOAgent:
                 self.ppo.save(checkpoint_path)
                 print("model saved")
                 print("―" * 100)
+            if episode_count % TEST_FREQ == 0:
+                agent = PPOAgent.load(checkpoint_path)
+                test_thread = TestThread("TestThread" + str(episode_count), agent)
+                test_thread.start()
+
+                if episode_count == 2500:
+                    test_thread.join()
+                    break
 
         log_f.close()
         env.close()
@@ -251,3 +278,17 @@ class PPOAgent:
         print("=" * 100)
         print(f"Total training time: {time.time() - start_time_sec}")
         print("=" * 100)
+
+
+class TestThread(threading.Thread):
+    def __init__(self, name, agent):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.agent = agent
+
+    def run(self):
+        print("Starting " + self.name)
+        a, b = evaluate(self.agent)
+        print(f"Average reward {self.name}: {a}")
+        print(f"Average opponent reward {self.name}: {b}")
+        print("Exiting " + self.name)

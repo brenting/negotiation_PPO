@@ -8,6 +8,7 @@ from environment.opponents import (
     LinearAgent,
     RandomAgent,
     StupidAgent,
+    SelfPlayAgent,
     CSE3210,
 )
 
@@ -47,6 +48,7 @@ opponents = (
     # CSE3210.Agent68,
     # CSE3210.Agent70,
     # CSE3210.Agent78,
+    # SelfPlayAgent,
 )
 
 # create environment and PPO agent

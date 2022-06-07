@@ -4,8 +4,10 @@ from datetime import datetime
 from typing import Optional
 
 import gym
+from geniusweb.actions.Offer import Offer
 from geniusweb.actions.Accept import Accept
 from geniusweb.actions.Action import Action
+from geniusweb.actions.EndNegotiation import EndNegotiation
 from geniusweb.actions.PartyId import PartyId
 from geniusweb.inform.ActionDone import ActionDone
 from geniusweb.inform.Agreements import Agreements
@@ -45,12 +47,15 @@ class NegotiationEnv(gym.Env):
         self.opponent = None
         self.my_utility_function = None
         self.opp_utility_function = None
+        self.my_domain = None
+        self.opp_domain = None
 
         self.random = random.Random(seed)
         self.verbose = verbose
 
-    def step(self, action: Inform) -> tuple[Action, float, bool, None]:
+    def step(self, action: Inform) -> tuple[Action, float, bool, float]:
         if self.progress.get(time.time() * 1000) == 1:
+            self.opponent.notifyChange(EndNegotiation)
             return None, 0.0, True, 0.0  # observation, reward, done, info
 
         self.opponent.notifyChange(ActionDone(action))
@@ -66,6 +71,7 @@ class NegotiationEnv(gym.Env):
         observation: Action = self.opponent.notifyChange(YourTurn())
 
         if self.progress.get(time.time() * 1000) == 1:
+            self.opponent.notifyChange(Finished)
             return None, 0.0, True, 0.0  # observation, reward, done, info
 
         if isinstance(observation, Accept):
@@ -76,15 +82,18 @@ class NegotiationEnv(gym.Env):
             opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
             return None, my_reward, True, opp_reward  # observation, reward, done, info
 
-        return observation, 0.0, False, None  # observation, reward, done, info
+        return observation, 0.0, False, 0.0  # observation, reward, done, info
 
     def reset(self, my_agent):
         self.opponent: DefaultParty = self.random.choice(self.opponents)(VoidReporter())
         domain = list(self.random.choice(self.domains))
         self.random.shuffle(domain)
 
+        self.current_domain = domain
         self.opp_utility_function = get_utility_function(domain[0])
         self.my_utility_function = get_utility_function(domain[1])
+        self.my_domain = domain[1]
+        self.opp_domain = domain[0]
 
         if self.verbose:
             print("Picking new opponent: " + str(type(self.opponent).__name__))
