@@ -52,6 +52,9 @@ ACTION_STD_DECAY_FREQ = 200  # action_std decay frequency (in num episode)
 UPDATE_EPISODE_FREQ = 100  # update policy every n episodes
 TEST_FREQ = 100
 
+evaluate_indexes = []
+evaluate_rewards = []
+evaluate_opp_rewards = []
 
 #####################################################
 
@@ -269,6 +272,9 @@ class PPOAgent:
 
                 if episode_count == 2500:
                     test_thread.join()
+                    print(evaluate_indexes)
+                    print(evaluate_rewards)
+                    print(evaluate_opp_rewards)
                     break
 
         log_f.close()
@@ -289,6 +295,9 @@ class TestThread(threading.Thread):
     def run(self):
         print("Starting " + self.name)
         a, b = evaluate(self.agent)
+        evaluate_indexes.append(self.name)
+        evaluate_rewards.append(a)
+        evaluate_opp_rewards.append(b)
         print(f"Average reward {self.name}: {a}")
         print(f"Average opponent reward {self.name}: {b}")
         print("Exiting " + self.name)

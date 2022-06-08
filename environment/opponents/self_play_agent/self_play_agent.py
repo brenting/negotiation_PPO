@@ -55,13 +55,6 @@ PPO_PARAMETERS = {
     "min_action_std": 0.1,  # minimum action_std (stop decay after action_std <= min_action_std)
 }
 
-
-# LOG_FREQ = 10  # log avg reward in the interval (in num episode)
-# SAVE_MODEL_FREQ = 10  # save model frequency (in num episode)
-# ACTION_STD_DECAY_FREQ = 25  # action_std decay frequency (in num episode)
-# UPDATE_EPISODE_FREQ = 10  # update policy every n episodes
-# NUMBER_OF_AGENTS = 10
-
 LOG_FREQ = 100  # log avg reward in the interval (in num episode)
 SAVE_MODEL_FREQ = 100  # save model frequency (in num episode)
 ACTION_STD_DECAY_FREQ = 40  # action_std decay frequency (in num episode)
