@@ -137,6 +137,9 @@ class PPOAgent:
 
         # find a good bid based on the utility goals
         bid = self.find_bid(util_goals)
+
+        assert bid, "bid cannot be None"
+
         action = Offer(self.me, bid)
 
         return action
@@ -156,7 +159,7 @@ class PPOAgent:
             my_util = self.get_utility(bid)
             opp_util = self.opponent_model.get_predicted_utility(bid)
             difference = np.sum(np.square(util_goals - np.array([my_util, opp_util])))
-            if difference < best_difference and my_util > util_goals[0]:
+            if difference < best_difference:
                 best_difference, best_bid = difference, bid
 
         return best_bid

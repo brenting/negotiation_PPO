@@ -10,6 +10,7 @@ from environment.opponents import (
     LinearAgent,
     RandomAgent,
     StupidAgent,
+    CSE3210,
 )
     
 # collect domains and opponents for testing (don't initialise the opponents)
@@ -22,10 +23,43 @@ opponents = (
     HardlinerAgent,
     LinearAgent,
     ConcederAgent
+    # ConcederAgent,
+    # HardlinerAgent,
+    # BoulwareAgent,
+    # LinearAgent,
+    # RandomAgent,
+    # StupidAgent,
+    #CSE3210.Agent2,
+    # CSE3210.Agent3,
+    # CSE3210.Agent7,
+    # CSE3210.Agent11,
+    # CSE3210.Agent14,
+    #CSE3210.Agent18,
+    # CSE3210.Agent19,
+    # CSE3210.Agent22,
+    # CSE3210.Agent24,
+    # CSE3210.Agent25,
+    #CSE3210.Agent26,
+    # CSE3210.Agent27,
+    # CSE3210.Agent29,
+    # CSE3210.Agent32,
+    # CSE3210.Agent33,
+    #CSE3210.Agent41,
+    #CSE3210.Agent43,
+    # CSE3210.Agent50,
+    #CSE3210.Agent52,
+    # CSE3210.Agent55,
+    # CSE3210.Agent58,
+    # CSE3210.Agent61,
+    #CSE3210.Agent64,
+    #CSE3210.Agent67,
+    #CSE3210.Agent68,
+    #CSE3210.Agent70,
+    #CSE3210.Agent78,
 )
 
 # create environment and PPO agent
-env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000)
+env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, seed=42)
 agent = PPOAgent.load("checkpoint.pkl")
 
 # test on 50 random negotiation sessions and gather average results
@@ -52,7 +86,7 @@ for round in range(N):
     while not done:
         print(reward,opp_reward)
         step += 1
-        action = agent.select_action(obs,estimatedUtiliy = opp_reward)
+        action = agent.select_action(obs, training=False, estimatedUtiliy = opp_reward)
         obs, reward, done, opp_reward = env.step(action)
         #making a deep copy of the estimated opponent model(s)
         exp.saveModels(agent)
