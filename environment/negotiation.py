@@ -72,7 +72,9 @@ class NegotiationEnv(gym.Env):
             opp_reward = float(self.opp_utility_function.getUtility(action.getBid()))
             return None, my_reward, True, opp_reward  # observation, reward, done, info
 
-        return observation, 0.0, False, None  # observation, reward, done, info
+        my_reward = float(self.my_utility_function.getUtility(observation.getBid()))
+        opp_reward = float(self.opp_utility_function.getUtility(observation.getBid()))
+        return observation, my_reward, False, opp_reward  # observation, reward, done, info
 
     def reset(self, my_agent):
         self.opponent: DefaultParty = random.choice(self.opponents)(VoidReporter())

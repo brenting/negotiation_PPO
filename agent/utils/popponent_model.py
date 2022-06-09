@@ -1,3 +1,4 @@
+from errno import EISDIR
 from matplotlib.pyplot import get
 import numpy as np
 from geniusweb.issuevalue.Domain import Domain
@@ -20,16 +21,15 @@ class PerceptronOpponentModel:
         }
         # print("Initializing Perceptron opponent model for " +str(self.N) + " issues")
 
-    def update(self, bid: Bid):
+    def update(self, bid: Bid, estimatedUtility):
+        if estimatedUtility == None:
+            return
         for epoch in range(self.N):
             for issueName,issueValue in bid.getIssueValues().items():
                 perceptronUtility = self.get_predicted_utility(bid)
-                estimatedUtility = 1
                 self.issueValues[issueName][issueValue] = self.issueValues[issueName][issueValue] + self.learning_rate * (estimatedUtility - perceptronUtility) * self.issueValues[issueName][issueValue]
-
             for issueName in self.domain.getIssues():
                 perceptronUtility = self.get_predicted_utility(bid)
-                estimatedUtility = 1
                 self.weights[issueName] = self.weights[issueName] + self.learning_rate * (estimatedUtility - perceptronUtility) * self.weights[issueName]
             
 

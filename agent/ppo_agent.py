@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 from random import randint
+from tkinter.messagebox import NO
 from typing import cast
 
 import numpy as np
@@ -70,6 +71,7 @@ class PPOAgent:
 
         self.opponent_model: OpponentModel = None
         self.opponent_model2: PerceptronOpponentModel = None
+        self.opponent_model3 : PerceptronOpponentModel = None
         self.last_received_utils = [0.0, 0.0, 0.0]
 
     def notifyChange(self, data: Inform):
@@ -100,8 +102,9 @@ class PPOAgent:
 
             self.opponent_model = OpponentModel(self.domain)
             self.opponent_model2 = PerceptronOpponentModel(self.domain)
-
-    def select_action(self, obs: Offer, training=True) -> Action:
+            self.opponent_model3 = PerceptronOpponentModel(self.domain)
+            
+    def select_action(self, obs: Offer, training=True, estimatedUtiliy = 1) -> Action:
         """Method to return an action when it is our turn.
 
         Args:
@@ -113,7 +116,8 @@ class PPOAgent:
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid()
         self.opponent_model.update(received_bid)
-        self.opponent_model2.update(received_bid)
+        self.opponent_model2.update(received_bid,1)
+        self.opponent_model3.update(received_bid,estimatedUtiliy)
 
         # build state vector for PPO
         received_util = float(self.get_utility(received_bid))
