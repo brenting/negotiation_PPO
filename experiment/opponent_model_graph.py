@@ -2,48 +2,56 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def mean_and_std_from_file(file):
-    csv = pd.read_csv(file, header=None, names=list(range(300))).dropna(axis='columns', how='all')
+def mean_and_std_from_file(file, skiprows = None, drop_first = False):
+    csv = pd.read_csv(file, header=None, skiprows = skiprows, names=list(range(39))).dropna(axis='columns', how='all')
     arr = np.array(csv)
-    mean = np.nanmean(arr,axis= 0)
-    std = np.nanstd(arr, axis = 0)
+    # if drop_first:
+    #     arr = arr[:,1:]
+    mean = np.nanmean(arr.astype(float),axis= 0)
+    std = np.nanstd(arr.astype(float), axis = 0)
     return (mean,std)
 
+def plotData(x, mean, std, label, plotStd = False,  errorevery = 1, alpha = 1.0, fmt= '-o'):
+    if not plotStd :
+        std = np.repeat(0,len(x))
+    plt.errorbar(x, mean, yerr=std, errorevery = errorevery, fmt=fmt,label = label, alpha = alpha)
 
-# file_name = ", N=2 rounds, opp = ['BoulwareAgent'], time = 2022-06-02_202910.csv"
-# file_name = ", N=10 rounds, opp = ['BoulwareAgent'], time = 2022-06-02_201407.csv"
-#file_name = ", N=200 rounds, opp = ['BoulwareAgent'], time = 2022-06-02_212038.csv"
-# file_name = ", N=200 rounds, opp = ['HardlinerAgent'], time = 2022-06-02_223858.csv"
-#file_name = ", N=500 rounds, opp = ['HardlinerAgent'], time = 2022-06-03_080412.csv"
-# file_name = ", N=100 rounds, opp = ['BoulwareAgent', 'ConcederAgent', 'HardlinerAgent', 'LinearAgent', 'RandomAgent', 'StupidAgent'], time = 2022-06-08_083629.csv"
-# file_name = ", N=100 rounds, opp = ['BoulwareAgent', 'ConcederAgent', 'HardlinerAgent', 'LinearAgent'], time = 2022-06-08_091140.csv"
-# file_name = ", N=50 rounds, opp = ['HardlinerAgent'], time = 2022-06-08_094528.csv"
-# # file_name = ", N=150 rounds, opp = ['HardlinerAgent', 'BoulwareAgent'], time = 2022-06-08_095050.csv"
-# # file_name = ", N=100 rounds, opp = ['BoulwareAgent'], time = 2022-06-08_101151.csv"
-# #file_name = ", N=300 rounds, opp = ['BoulwareAgent', 'HardlinerAgent', 'LinearAgent', 'ConcederAgent'], time = 2022-06-08_103118.csv"
-# file_name = ", N=500 rounds, opp = ['BoulwareAgent', 'HardlinerAgent', 'LinearAgent', 'ConcederAgent'], time = 2022-06-08_111624.csv"
 
-file_name = "time = 2022-06-09_130324, rounds = 50, opp = ['BoulwareAgent', 'HardlinerAgent', 'LinearAgent', 'ConcederAgent'].csv"
+file_name = "time = 2022-06-14_095804, rounds = 1, opp = ['LinearAgent'].csv"
+file_name = "time = 2022-06-14_150738, rounds = 1, opp = ['LinearAgent'].csv"
+file_name = "time = 2022-06-14_151129, rounds = 1, opp = ['LinearAgent'].csv"
+file_name = "time = 2022-06-14_152240, rounds = 1, opp = ['LinearAgent'].csv"
+file_name = "time = 2022-06-14_152345, rounds = 10, opp = ['LinearAgent'].csv"
+file_name = "time = 2022-06-14_152942, rounds = 10, opp = ['HardlinerAgent'].csv"
+file_name = "time = 2022-06-14_203116, rounds = 1, opp = ['HardlinerAgent', 'BoulwareAgent', 'ConcederAgent', 'LinearAgent'].csv"
+file_name = "time = 2022-06-14_204947, rounds = 1, opp = ['LinearAgent'].csv"
+file_name = "time = 2022-06-14_210635, rounds = 1, opp = ['ConcederAgent'].csv"
+file_name = "time = 2022-06-14_210726, rounds = 1, opp = ['HardlinerAgent'].csv"
 (meanSmith , stdSmith) = mean_and_std_from_file(f"opp-model-logs/smith/{file_name}")
 (meanPerceptron , stdPerceptron) = mean_and_std_from_file(f"opp-model-logs/perceptron/{file_name}")
 (meanPPerceptron , stdPPerceptron) = mean_and_std_from_file(f"opp-model-logs/perfect_perceptron/{file_name}")
-
+(meanReward, stdReward) = mean_and_std_from_file(f"opp-model-logs/round_info/{file_name}",skiprows= (lambda x : x % 3 != 1 ),drop_first= True)
+(meanBidSpace, stdBidSpace) = mean_and_std_from_file(f"opp-model-logs/round_info/{file_name}",skiprows= (lambda x : x % 3 != 2 ),drop_first= True)
 N = len(meanSmith)
 
 x = np.arange(len(meanSmith))
 plt.title("The evolution of the accuracy over the negotiation session")
 plt.xlabel("Number of exchanged bids")
 plt.ylabel("Pearson correlation of bids")
-mask = np.tile([0,0,1], (int((N+2)/3)))[:N]
-# plt.errorbar(x, meanSmith, yerr=stdSmith, fmt='-o',label = "Smith Model")
-plt.errorbar(x, meanSmith, yerr=(stdSmith*mask), fmt='-o',label = "Smith Model")
-mask = np.tile([0,1,0], (int((N+2)/3)))[:N]
-# plt.errorbar(x, meanPerceptron,yerr = stdPerceptron, fmt='-o',label = "Perceptron Model")
-plt.errorbar(x, meanPerceptron,yerr = (stdPerceptron * mask), fmt='-o',label = "Perceptron Model")
+# mask = []
+# mask.append (np.tile([0,0,1], (int((N+2)/3)))[:N])
+# mask.append(np.tile([0,1,0], (int((N+2)/3)))[:N])
+# mask.append(np.tile([1,0,0], (int((N+2)/3)))[:N])
 
-mask = np.tile([1,0,0], (int((N+2)/3)))[:N]
-plt.errorbar(x, meanPPerceptron,yerr = (stdPPerceptron * mask), fmt='-o',label = "Perfect Perceptron Model")
+n = 1000000
+# plt.errorbar(x, meanSmith, yerr=stdSmith, fmt='-o',label = "Smith Model")
+plotData(x[:n],meanSmith[:n],stdSmith[:n],"Smith Model", errorevery = (0,9) , plotStd = True)
+plotData(x[:n],meanPerceptron[:n],stdPerceptron[:n],"Perceptron Model",  errorevery = (3,9), plotStd = True)
+plotData(x[:n],meanPPerceptron[:n],stdPPerceptron[:n],"Perfect Perceptron Model", errorevery = (6,9), plotStd = True)
+plotData(x[:n], meanReward[:n], stdReward[:n], "Opponent Reward" , plotStd=True, alpha=0.5,fmt = '-')
+plotData(x[:n], 100*meanBidSpace[:n], stdBidSpace[:n], "Seen Bid Space" , plotStd=False, alpha=0.5,fmt = '-')
 plt.legend()
 plt.draw()
+plt.savefig(f"graphs/{file_name[:-4]}")
 plt.show()
 

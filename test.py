@@ -16,20 +16,18 @@ from environment.opponents import (
 # collect domains and opponents for testing (don't initialise the opponents)
 domains = get_domains("environment/domains/test")
 
-domains = domains[2:5]
+domains = domains
 
 opponents = (
-    BoulwareAgent,
     HardlinerAgent,
-    LinearAgent,
-    ConcederAgent
-    # ConcederAgent,
-    # HardlinerAgent,
+    #BoulwareAgent,
+    #ConcederAgent,
+    #LinearAgent,
     # BoulwareAgent,
-    # LinearAgent,
+    #LinearAgent,
     # RandomAgent,
     # StupidAgent,
-    #CSE3210.Agent2,
+    # CSE3210.Agent2,
     # CSE3210.Agent3,
     # CSE3210.Agent7,
     # CSE3210.Agent11,
@@ -71,12 +69,13 @@ sumPerceptron = []
 totalP = []
 result = []
 
-N = 50
+N = 1
 
 exp = OpponentModellingExperiment(opponents,N)
 
 for round in range(N):
     obs = env.reset(agent)
+    exp.reset(env)
     done = False
     opp_reward = (float)(env.opp_utility_function.getUtility(obs.getBid()))
     reward = (float)(env.my_utility_function.getUtility(obs.getBid()))
@@ -84,12 +83,12 @@ for round in range(N):
     estimed_opp_Smith = []
     estimed_opp_Perceptron = []
     while not done:
-        print(reward,opp_reward)
         step += 1
+        #print("1",env.opp_utility_function.getUtility(obs.getBid()), agent.opponent_model2.get_predicted_utility(obs.getBid()), agent.opponent_model3.get_predicted_utility(obs.getBid()))
         action = agent.select_action(obs, training=False, estimatedUtiliy = opp_reward)
+        exp.saveModels(agent, reward, opp_reward)
+        #print("2",env.opp_utility_function.getUtility(obs.getBid()), agent.opponent_model2.get_predicted_utility(obs.getBid()), agent.opponent_model3.get_predicted_utility(obs.getBid()))
         obs, reward, done, opp_reward = env.step(action)
-        #making a deep copy of the estimated opponent model(s)
-        exp.saveModels(agent)
         if done:
             rewards.append(reward)
             print(f"Reward for round {round+1}/{N}: {reward}, Opponent's reward: {opp_reward} , reached aggrement after {step} step(s)")

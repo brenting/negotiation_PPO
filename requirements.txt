@@ -6,3 +6,4 @@ gym==0.23.1
 torch==1.11.0
 matplotlib
 pandas
+scipy
