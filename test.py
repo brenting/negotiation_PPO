@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from agent.concession_agent import ConcessionAgent
+from agent.ppo_agent import PPOAgent
 from environment.domains import get_domains
 from environment.negotiation import NegotiationEnv
+from agent.baseline_agent import BaselineAgent
 # collect domains and opponents for testing (don't initialise the opponents)
 from environment.opponents import (
     BoulwareAgent,
@@ -24,27 +26,32 @@ def test():
     global agent, rewards
     domains = get_domains("environment/domains/test")
     opponents = (
+        #HardlinerAgent,
+        #ConcederAgent,
+        #BoulwareAgent,
+        #BaselineAgent,
+        CSE3210.Agent2,
 
-         CSE3210.Agent2,
-        #
-        #CSE3210.Agent18,
-        #
-        # CSE3210.Agent26,
-        #
-        #CSE3210.Agent41,
-        #
-         #CSE3210.Agent52,
-        #
-       #  CSE3210.Agent64,
-         #CSE3210.Agent67,
-         #CSE3210.Agent68,
+        CSE3210.Agent18,
 
-        #CSE3210.Agent78,
+         CSE3210.Agent26,
+
+        CSE3210.Agent41,
+
+         CSE3210.Agent52,
+
+       CSE3210.Agent64,
+        CSE3210.Agent67,
+         CSE3210.Agent68,
+
+       CSE3210.Agent78,
 
     )
     # create environment and PPO agent
-    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, verbose=True, seed=42)
-    agent = ConcessionAgent.load("checkpoint.pkl")
+    env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=6000, verbose=True, seed=42)
+    agent = ConcessionAgent.load("conceshpoint.pkl")
+    #agent = PPOAgent.load("checkpoint.pkl")
+    #agent = BaselineAgent()
     # test on 50 random negotiation sessions and gather average results
     rewards = []
     opp_rewards = []
@@ -54,7 +61,7 @@ def test():
     switch = False
     nash_avg = []
     concesh = []
-    for _ in range(50):
+    for _ in range(5):
         obs = env.reset(agent)
         my_prof = str(env.my_domain)[-13:]
         done = False
@@ -71,17 +78,20 @@ def test():
         pareto_utilities = []
         for bid in pareto_front:
             pareto_utilities.append(bid.get('utility'))
-        concesh.append(agent.opp_concession)
+
         try:
             f = open("learned_values/" + env.opponent.__class__.__name__ + ".txt", "r")
             agent.opp_concession = float(f.read())
             f.close()
+            #concesh.append(agent.opp_concession)
         except FileNotFoundError:
             agent.opp_concession = 0
 
         while not done:
             action = agent.select_action(obs, training=False)
+            concesh.append(agent.opp_concession)
             obs, reward, done, opp_reward = env.step(action)
+            #print(agent.opp_concession)
             switch = False
             if done:
                 # print(agent.opp_concession)
@@ -133,6 +143,8 @@ def plot_trendline(data, filename):
     x, y = np.arange(len(data)), data
     # create scatterplot
     plt.scatter(x, y)
+    plt.xlabel("Total rounds")
+    plt.ylabel("Estimated opponent concession parameter")
     # calculate equation for trendline
     z = np.polyfit(x, y, 1)
     p = np.poly1d(z)

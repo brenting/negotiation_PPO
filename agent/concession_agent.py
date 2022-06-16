@@ -141,7 +141,8 @@ class ConcessionAgent:
 
         # extract bid from offer and use it to update opponent utility estimation
         received_bid = obs.getBid() if obs is not None else None
-        self.opponent_model.update(received_bid)
+        if obs is not None:
+            self.opponent_model.update(received_bid)
 
         # build state vector for PPO
         opp_util = float(self.opponent_model.get_predicted_utility(received_bid))
@@ -172,7 +173,8 @@ class ConcessionAgent:
 
         self.previously_sent_utils.append(self.get_utility(bid))
         self.previously_sent_utils.pop(0)
-
+        # if progress > 0.8:
+        #     print(progress)
         # return Accept if the received offer is better than our goal
         if self.get_utility(received_bid) > self.target:
             # print("accepted", self.target)
@@ -205,6 +207,8 @@ class ConcessionAgent:
 
     def get_utility(self, bid: Bid) -> float:
         """returns utility value of bid for our agent"""
+        if bid is None:
+            return 0
         return float(self.profile.getUtility(bid))
 
     def save(self, checkpoint_path):

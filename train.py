@@ -1,3 +1,4 @@
+from agent.ppo_agent import PPOAgent
 from environment.negotiation import NegotiationEnv
 from environment.domains import get_domains
 from agent.concession_agent import ConcessionAgent
@@ -16,13 +17,6 @@ from utils.plot_trace import plot_training
 
 domains = get_domains("environment/domains/train") #[0]
 opponents = (
-    # ConcederAgent,
-    # HardlinerAgent,
-    # BoulwareAgent,
-    # LinearAgent,
-    # RandomAgent,
-    # StupidAgent,
-    # CSE3210.Agent2,
     CSE3210.Agent3,
     CSE3210.Agent7,
     CSE3210.Agent11,
@@ -32,28 +26,20 @@ opponents = (
     CSE3210.Agent22,
     CSE3210.Agent24,
     CSE3210.Agent25,
-    # CSE3210.Agent26,
     CSE3210.Agent27,
     CSE3210.Agent29,
     CSE3210.Agent32,
     CSE3210.Agent33,
-    # CSE3210.Agent41,
-    # CSE3210.Agent43,
     CSE3210.Agent50,
-    # CSE3210.Agent52,
     CSE3210.Agent55,
     CSE3210.Agent58,
     CSE3210.Agent61,
-    # CSE3210.Agent64,
-    # CSE3210.Agent67,
-    # CSE3210.Agent68,
-    # CSE3210.Agent70,
-    # CSE3210.Agent78,
+
 )
 
 # create environment and PPO agent
 env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, seed=42)
-agent = ConcessionAgent()
+agent = PPOAgent()
 
 # set checkpoint path for intermediate model checkpoints
 checkpoint_path = "checkpoint.pkl"
@@ -61,4 +47,4 @@ checkpoint_path = "checkpoint.pkl"
 # train and save agent
 agent.train(env=env, time_budget_sec=3600, checkpoint_path=checkpoint_path)
 agent.save(checkpoint_path)
-plot_training(agent.rewards, "results/training_plot.html")
+#plot_training(agent.rewards, "results/training_plot.html")

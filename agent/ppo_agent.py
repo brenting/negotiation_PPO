@@ -27,7 +27,6 @@ from geniusweb.simplerunner.NegoRunner import StdOutReporter
 
 from agent.utils.opponent_model import OpponentModel
 
-from test import test
 from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################
@@ -275,8 +274,8 @@ class PPOAgent:
                 # self.ppo.load(checkpoint_path)
                 print("model saved")
                 print("―" * 100)
-            if episode_count % TEST_FREQ == 0:
-                test(PPOAgent.load(checkpoint_path))
+            # if episode_count % TEST_FREQ == 0:
+            #     test(PPOAgent.load(checkpoint_path))
 
         log_f.close()
         env.close()
