@@ -5,6 +5,8 @@ from environment.opponents import (
     CSE3210,
 )
 
+from plot_trace import plot_trace
+
 # collect domains and opponents for testing (don't initialise the opponents)
 domains = get_domains("environment/domains/test")
 opponents = (
@@ -58,6 +60,8 @@ def run_test_negotiations(agent):
                 rewards.append(reward)
                 opp_rewards.append(opp_reward)
                 break
+
+    plot_trace(env.trace, "results/trace_plot.html")
     return rewards, opp_rewards
 
 
@@ -105,7 +109,7 @@ range_5 = range(1, 6)
 # with open('base_agent_50_opp_rewards.txt', 'w') as filehandle:
 #     filehandle.writelines("%s\n" % reward for reward in base_agent_50_opp_rewards)
 #
-# mean
+# # mean
 # stats_agents_1 = [PPOAgent.load("checkpoints/checkpoint_stats_1_" + str(x) + ".pkl") for x in range_5]
 # stats_agent_1_rewards, stats_agent_1_opp_rewards = collect_averages(stats_agents_1)
 #
@@ -115,7 +119,7 @@ range_5 = range(1, 6)
 # with open('stats_agent_1_opp_rewards.txt', 'w') as filehandle:
 #     filehandle.writelines("%s\n" % reward for reward in stats_agent_1_opp_rewards)
 #
-# mean + number_of_bids
+# # mean + number_of_bids
 # stats_agents_2 = [PPOAgent.load("checkpoints/checkpoint_stats_2_" + str(x) + ".pkl") for x in range_5]
 # stats_agent_2_rewards, stats_agent_2_opp_rewards = collect_averages(stats_agents_2)
 #
@@ -155,7 +159,7 @@ range_5 = range(1, 6)
 # with open('stats_agent_5_opp_rewards.txt', 'w') as filehandle:
 #     filehandle.writelines("%s\n" % reward for reward in stats_agent_5_opp_rewards)
 #
-# mean + number_of_bids + own_std + own_median + own_mode + own_range
+# # mean + number_of_bids + own_std + own_median + own_mode + own_range
 # stats_agents_6 = [PPOAgent.load("checkpoints/checkpoint_stats_6_" + str(x) + ".pkl") for x in range_5]
 # stats_agent_6_rewards, stats_agent_6_opp_rewards = collect_averages(stats_agents_6)
 #
@@ -165,7 +169,7 @@ range_5 = range(1, 6)
 # with open('stats_agent_6_opp_rewards.txt', 'w') as filehandle:
 #     filehandle.writelines("%s\n" % reward for reward in stats_agent_6_opp_rewards)
 #
-# mean + number_of_bids + own_std + own_median + own_mode + own_range + corr
+# # mean + number_of_bids + own_std + own_median + own_mode + own_range + corr
 # stats_agents_7 = [PPOAgent.load("checkpoints/checkpoint_stats_7_" + str(x) + ".pkl") for x in range_5]
 # stats_agent_7_rewards, stats_agent_7_opp_rewards = collect_averages(stats_agents_7)
 #
@@ -175,16 +179,16 @@ range_5 = range(1, 6)
 # with open('stats_agent_7_opp_rewards.txt', 'w') as filehandle:
 #     filehandle.writelines("%s\n" % reward for reward in stats_agent_7_opp_rewards)
 #
-# mean + number_of_bids + own_std + own_median + own_mode + own_range + corr + opp_mean
-stats_agents_8 = [PPOAgent.load("checkpoints/checkpoint_stats_8_" + str(x) + ".pkl") for x in range_5]
-stats_agent_8_rewards, stats_agent_8_opp_rewards = collect_averages(stats_agents_8)
-
-with open('stats_agent_8_rewards.txt', 'w') as filehandle:
-    filehandle.writelines("%s\n" % reward for reward in stats_agent_8_rewards)
-
-with open('stats_agent_8_opp_rewards.txt', 'w') as filehandle:
-    filehandle.writelines("%s\n" % reward for reward in stats_agent_8_opp_rewards)
-
+# # mean + number_of_bids + own_std + own_median + own_mode + own_range + corr + opp_mean
+# stats_agents_8 = [PPOAgent.load("checkpoints/checkpoint_stats_8_" + str(x) + ".pkl") for x in range_5]
+# stats_agent_8_rewards, stats_agent_8_opp_rewards = collect_averages(stats_agents_8)
+#
+# with open('stats_agent_8_rewards.txt', 'w') as filehandle:
+#     filehandle.writelines("%s\n" % reward for reward in stats_agent_8_rewards)
+#
+# with open('stats_agent_8_opp_rewards.txt', 'w') as filehandle:
+#     filehandle.writelines("%s\n" % reward for reward in stats_agent_8_opp_rewards)
+#
 # # mean + number_of_bids + own_std + own_median + own_mode + own_range + corr + opp_mean + opp_std
 # stats_agents_9 = [PPOAgent.load("checkpoints/checkpoint_stats_9_" + str(x) + ".pkl") for x in range_5]
 # stats_agent_9_rewards, stats_agent_9_opp_rewards = collect_averages(stats_agents_9)
@@ -215,16 +219,12 @@ with open('stats_agent_8_opp_rewards.txt', 'w') as filehandle:
 # with open('stats_agent_11_opp_rewards.txt', 'w') as filehandle:
 #     filehandle.writelines("%s\n" % reward for reward in stats_agent_11_opp_rewards)
 #
-# # mean + number_of_bids + own_std + own_median + own_mode + own_range + corr + opp_mean + opp_std + opp_median + opp_mode + opp_range
-# stats_agents_12 = [PPOAgent.load("checkpoints/checkpoint_stats_12_" + str(x) + ".pkl") for x in range_5]
-# stats_agent_12_rewards, stats_agent_12_opp_rewards = collect_averages(stats_agents_12)
-#
-# with open('stats_agent_12_rewards.txt', 'w') as filehandle:
-#     filehandle.writelines("%s\n" % reward for reward in stats_agent_12_rewards)
-#
-# with open('stats_agent_12_opp_rewards.txt', 'w') as filehandle:
-#     filehandle.writelines("%s\n" % reward for reward in stats_agent_12_opp_rewards)
+# mean + number_of_bids + own_std + own_median + own_mode + own_range + corr + opp_mean + opp_std + opp_median + opp_mode + opp_range
+stats_agents_12 = [PPOAgent.load("checkpoints/checkpoint_stats_12_" + str(x) + ".pkl") for x in range_5]
+stats_agent_12_rewards, stats_agent_12_opp_rewards = collect_averages(stats_agents_12)
 
-# # print results
-# print(f"Average reward: {sum(base_agent_rewards) / len(base_agent_rewards)}")
-# print(f"Average opponent reward: {sum(base_agent_opp_rewards) / len(base_agent_opp_rewards)}")
+with open('stats_agent_12_rewards.txt', 'w') as filehandle:
+    filehandle.writelines("%s\n" % reward for reward in stats_agent_12_rewards)
+
+with open('stats_agent_12_opp_rewards.txt', 'w') as filehandle:
+    filehandle.writelines("%s\n" % reward for reward in stats_agent_12_opp_rewards)
