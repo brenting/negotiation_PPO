@@ -20,12 +20,12 @@ domains = domains
 
 opponents = (
     HardlinerAgent,
-    #BoulwareAgent,
-    #ConcederAgent,
-    #LinearAgent,
+    BoulwareAgent,
+    ConcederAgent,
+    LinearAgent,
     # BoulwareAgent,
     #LinearAgent,
-    # RandomAgent,
+    #RandomAgent,
     # StupidAgent,
     # CSE3210.Agent2,
     # CSE3210.Agent3,
@@ -69,7 +69,7 @@ sumPerceptron = []
 totalP = []
 result = []
 
-N = 1
+N = 500
 
 exp = OpponentModellingExperiment(opponents,N)
 
