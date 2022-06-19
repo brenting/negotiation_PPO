@@ -7,3 +7,5 @@ logs
 checkpoint.pkl
 *.sbatch
 .idea
+results
+checkpoints
