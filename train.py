@@ -54,7 +54,7 @@ env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, se
 agent = PPOAgent()
 
 # set checkpoint path for intermediate model checkpoints
-checkpoint_path = "checkpoint_stats_2_5.pkl"
+checkpoint_path = "checkpoint_stats_10_4.pkl"
 
 # train and save agent
 agent.train(env=env, time_budget_sec=21600, checkpoint_path=checkpoint_path)

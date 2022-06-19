@@ -29,7 +29,7 @@ from .utils.ppo import PPO
 
 ################ PPO hyperparameters ################
 PPO_PARAMETERS = {
-    "state_dim": 8,  # dimension of state space
+    "state_dim": 14,  # dimension of state space
     "action_dim": 2,  # dimension of action space
     "lr_actor": 0.0003,  # learning rate for actor network
     "lr_critic": 0.001,  # learning rate for critic network
@@ -68,7 +68,9 @@ class PPOAgent:
 
         self.opponent_model: OpponentModel = None
 
+        self.last_three_received_utils = [0.0, 0.0, 0.0]
         self.last_five_received_utils = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.last_50_received_utils = [0.0] * 50
         self.received_bids = []
         self.received_utils = []
 
@@ -117,8 +119,15 @@ class PPOAgent:
         # update saved utilities
         received_util = float(self.get_utility(received_bid))
         self.received_utils.append(received_util)
+
+        self.last_three_received_utils.append(received_util)
+        self.last_three_received_utils.pop(0)
+
         self.last_five_received_utils.append(received_util)
         self.last_five_received_utils.pop(0)
+
+        self.last_50_received_utils.append(received_util)
+        self.last_50_received_utils.pop(0)
 
         # build state vector for PPO
         number_of_bids = len(self.received_bids)
@@ -126,27 +135,29 @@ class PPOAgent:
         opp_utilities = [float(self.opponent_model.get_predicted_utility(x)) for x in self.received_bids]
 
         own_mean = np.mean(self.received_utils)
-        # opp_mean = np.mean(opp_utilities)
-        #
-        # own_std = np.std(self.received_utils)
+        opp_mean = np.mean(opp_utilities)
+
+        own_std = np.std(self.received_utils)
         # opp_std = np.std(opp_utilities)
-        #
-        # own_median = np.median(self.received_utils)
+
+        own_median = np.median(self.received_utils)
         # opp_median = np.median(opp_utilities)
-        #
-        # own_mode = stats.mode(self.received_utils)[0]
+
+        own_mode = stats.mode(self.received_utils)[0]
         # opp_mode = stats.mode(opp_utilities)[0]
         #
-        # own_range = np.ptp(self.received_utils)
+        own_range = np.ptp(self.received_utils)
         # opp_range = np.ptp(opp_utilities)
         #
-        # corr = 1
-        # if number_of_bids > 1:
-        #     corr, p_value = stats.pearsonr(self.received_utils, opp_utilities)
+        corr = 1
+        if number_of_bids > 1:
+            corr, p_value = stats.pearsonr(self.received_utils, opp_utilities)
 
         progress = self.progress.get(time.time() * 1000)
-        # state = tuple(self.last_five_received_utils + [number_of_bids, progress, own_mean, own_std, own_median, own_mode, own_range, opp_mean, opp_std, opp_median, opp_mode, opp_range, corr])
-        state = tuple(self.last_five_received_utils + [progress, own_mean, number_of_bids])
+
+        # state = tuple(self.last_five_received_utils + [progress, own_mean, number_of_bids, own_std, own_median, own_mode, own_range, corr, opp_mean, opp_std, opp_median, opp_mode, opp_range])
+
+        state = tuple(self.last_five_received_utils + [progress, own_mean, number_of_bids, own_std, own_median, own_mode, own_range, corr, opp_mean])
         assert len(state) == PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
