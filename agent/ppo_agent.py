@@ -52,7 +52,7 @@ UPDATE_EPISODE_FREQ = 10  # update policy every n episodes
 
 
 class PPOAgent:
-    def __init__(self, ppo: PPO = None):
+    def __init__(self, ppo: PPO = None, issue_values=False, private_info=False, exact_derived=False, inexact_derived=False, PPO_PARAMETERS = PPO_PARAMETERS):
         # create new PPO if none is provided
         if ppo is None:
             self.ppo = PPO(**PPO_PARAMETERS)
@@ -66,10 +66,27 @@ class PPOAgent:
         self.progress: ProgressTime = None
         self.me: PartyId = None
         self.settings: Settings = None
+        self.issue_values = issue_values
+        self.private_info = private_info
+        self.exact_derived = exact_derived
+        self.inexact_derived = inexact_derived
+        self.values = []
+        self.best_bid = 0
+        self.received_utils = []
+        self.PPO_PARAMETERS = PPO_PARAMETERS
+        self.test = False
 
         self.opponent_model: OpponentModel = None
 
         self.last_received_utils = [0.0, 0.0, 0.0]
+
+    def set(self, issue_values=False, private_info=False, exact_derived=False, inexact_derived=False, test=False, PPO_PARAMETERS = PPO_PARAMETERS):
+        self.issue_values = issue_values
+        self.private_info = private_info
+        self.exact_derived = exact_derived
+        self.inexact_derived = inexact_derived
+        self.test = test
+        self.PPO_PARAMETERS = PPO_PARAMETERS
 
     def notifyChange(self, data: Inform):
         """MUST BE IMPLEMENTED
@@ -85,7 +102,6 @@ class PPOAgent:
         if isinstance(data, Settings):
             self.settings = cast(Settings, data)
             self.me = self.settings.getID()
-
             # progress towards the deadline has to be tracked manually through the use of the Progress object
             self.progress = self.settings.getProgress()
 
@@ -95,6 +111,33 @@ class PPOAgent:
             )
             self.profile = profile_connection.getProfile()
             self.domain = self.profile.getDomain()
+            self.values = []
+            self.best_bid = 0
+            self.received_utils = []
+            if self.issue_values:
+                issues = self.domain.getIssues()
+                values = 0
+                values_multi = 1
+                for i in issues:
+                    values += self.domain.getValues(i).size()
+                    values_multi *= self.domain.getValues(i).size()
+                self.values = self.values + [len(issues), values, values_multi]
+            if self.private_info:
+                domain = self.profile.getDomain()
+                all_bids = AllBidsList(domain)
+                all_bids_utility = []
+                for i in range(all_bids.size()):
+                    all_bids_utility += [self.get_utility(all_bids.get(i))]
+                average_utility = np.average(all_bids_utility)
+                std_utility = np.std(all_bids_utility)
+                issues = self.domain.getIssues()
+                weights = []
+                for i in issues:
+                    utilities = self.profile.getUtilities()[i].getUtilities()
+                    weights += utilities.values()
+                std_weights = np.std(weights)
+                self.values = self.values + [average_utility, std_utility, std_weights]
+
             profile_connection.close()
 
             self.opponent_model = OpponentModel(self.domain)
@@ -117,13 +160,31 @@ class PPOAgent:
         self.last_received_utils.append(received_util)
         self.last_received_utils.pop(0)
         progress = self.progress.get(time.time() * 1000)
-        state = tuple(self.last_received_utils + [progress])
-        assert len(state) == PPO_PARAMETERS["state_dim"]
+        # nash = self.nash_utility()
+        derived = []
+        self.received_utils += [received_util]
+        if self.exact_derived:
+            if self.best_bid < received_util:
+                self.best_bid = received_util
+            average_received = np.average(self.received_utils)
+            std_received = np.std(self.received_utils)
+            derived += [self.best_bid, average_received, std_received]
+
+        if self.inexact_derived:
+            nash = self.nash_utility()
+            slope = 0
+            if len(self.received_utils) > 1:
+                slope, _ = np.polyfit(np.arange(len(self.received_utils)), self.received_utils, 1)
+            derived += [nash, slope]
+
+        state = tuple(self.last_received_utils + [progress] + self.values + derived)
+        if self.test:
+            state = tuple(self.last_received_utils + [progress] + [0] * (len(self.values) + len(derived)))
+        assert len(state) == self.PPO_PARAMETERS["state_dim"]
 
         # obtain action vector from PPo based on the state
         util_goals = self.ppo.select_action(state, training)
-        assert len(util_goals) == PPO_PARAMETERS["action_dim"]
-
+        assert len(util_goals) == self.PPO_PARAMETERS["action_dim"]
         # return Accept if the reveived offer is better than our goal
         if util_goals[0] < received_util:
             return Accept(self.me, received_bid)
@@ -157,6 +218,24 @@ class PPOAgent:
 
         return best_bid
 
+    def nash_utility(self) -> float:
+        # TODO: Implement NSGA-II version?
+        # compose a list of all possible bids
+        domain = self.profile.getDomain()
+        all_bids = AllBidsList(domain)
+        best_util = 0
+
+        # take 1000 random attempts to find a perceived nash-point
+        for _ in range(1000):
+            bid = all_bids.get(randint(0, all_bids.size() - 1))
+            my_util = self.get_utility(bid)
+            opp_util = max(self.opponent_model.get_predicted_utility(bid), 0.1)
+            nash_value = my_util * opp_util
+            if nash_value > best_util:
+                best_util = nash_value
+
+        return best_util
+
     def get_utility(self, bid: Bid) -> float:
         """returns utility value of bid for our agent"""
         return float(self.profile.getUtility(bid))
@@ -165,7 +244,7 @@ class PPOAgent:
         self.ppo.save(checkpoint_path)
 
     @classmethod
-    def load(cls, checkpoint_path):
+    def load(cls, checkpoint_path, PPO_PARAMETERS=PPO_PARAMETERS):
         ppo = PPO(**PPO_PARAMETERS)
         ppo.load(checkpoint_path)
         return cls(ppo)
@@ -199,7 +278,6 @@ class PPOAgent:
         episode_count = 0
         start_time_sec = time.time()
         while (time.time() - start_time_sec) < time_budget_sec:
-
             obs = env.reset(self)
             episode_reward = 0
             done = False
@@ -207,7 +285,6 @@ class PPOAgent:
             while not done:
                 # select action with policy
                 action = self.select_action(obs)
-
                 # execute action
                 obs, reward, done, _ = env.step(action)
 
@@ -216,7 +293,6 @@ class PPOAgent:
                 self.ppo.buffer.is_terminals.append(done)
 
                 episode_reward += reward
-
             log_running_reward.append(episode_reward)
             episode_count += 1
 
@@ -238,9 +314,11 @@ class PPOAgent:
 
             # save model weights
             if episode_count % SAVE_MODEL_FREQ == 0:
+                nr = (time.time() - start_time_sec) / 1800
+                nr = int(nr)
                 print("―" * 100)
-                print(f"saving model at: {checkpoint_path}")
-                self.ppo.save(checkpoint_path)
+                print(f"saving model at: {checkpoint_path + str(nr)}")
+                self.ppo.save(str(nr) + checkpoint_path)
                 print("model saved")
                 print("―" * 100)
 
