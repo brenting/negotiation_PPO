@@ -49,9 +49,14 @@ opponents = (
     # CSE3210.Agent78,
 )
 
+continue_train = False
+if continue_train:
+    agent = PPOAgent.load("checkpoint.pkl")
+else:
+    agent = PPOAgent()
+
 # create environment and PPO agent
 env = NegotiationEnv(domains=domains, opponents=opponents, deadline_ms=10000, seed=42)
-agent = PPOAgent()
 
 # set checkpoint path for intermediate model checkpoints
 checkpoint_path = "checkpoint.pkl"
